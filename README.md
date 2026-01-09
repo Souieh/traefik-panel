@@ -11,11 +11,10 @@
 
 ## 🛠️ Architecture
 
-The project consists of three main components bundled into a single container:
+The project consists of two main components bundled into a single container:
 
-1.  **Frontend**: A Vite-based web application (located in `/web`).
-2.  **Backend**: A FastAPI Python application (located in `/api`).
-3.  **Proxy**: Nginx serves the frontend static files and reverse-proxies API requests to the backend.
+1. **Frontend**: A Vite-based web application (located in `/web`).
+2. **Backend**: A FastAPI Python application (located in `/api`) that serves the API and the static frontend files.
 
 ## 📦 Getting Started
 
@@ -26,30 +25,42 @@ The project consists of three main components bundled into a single container:
 
 ### Installation
 
-1.  **Build the Image**
+**Build and run all at once (Panel + Traefik containers)**
 
-    ```bash
-    docker build -t traefik-panel .
-    ```
+1. Setup envirments :
 
-2.  **Run the Container**
+```bash
+        cp .env.example .env
+```
 
-    ```bash
-    docker run -d -p 80:80 --name tpm traefik-panel
-    ```
+2. Build and run
 
-    The dashboard will be available at `http://localhost`.
+```bash
+     docker compose up -d
+```
+
+3. The dashboard will be available at `http://localhost:5000`.
 
 ## 🔧 Development
 
-To contribute or modify the project, you can run the services locally.
-
 ### Backend (FastAPI)
 
+1. Install dependencies
+
 ```bash
-cd api
-pip install -r requirements.txt
-uvicorn api.main:app --reload --port 8000
+    cd api && make setup
+```
+
+2. Setup envirment variables:
+
+```bash
+    cp .env.example .env
+```
+
+3.  Run the api
+
+```bash
+    make run
 ```
 
 ### Frontend (Vite)
