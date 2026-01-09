@@ -1,0 +1,7 @@
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: souieh.aissa@onil.dz
+      httpChallenge:
+        entryPoint: websecure
+      storage: acme.json

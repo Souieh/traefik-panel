@@ -1,0 +1,21 @@
+http:
+  routers:
+    hello:
+      entryPoints:
+        - web
+        - websecure
+      rule: Host(`hello.dev.local`)
+      service: test
+      tls: {}
+    traefik-dashboard:
+      entryPoints:
+        - web
+        - websecure
+      rule: Host(`traefik.dev.local`)
+      service: api@internal
+      tls: {}
+  services:
+    test:
+      loadBalancer:
+        servers:
+          - url: http://192.168.122.130:80
