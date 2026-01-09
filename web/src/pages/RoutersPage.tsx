@@ -1,0 +1,1004 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectGroup,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/ui/multi-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import api from "@/lib/api";
+import {
+  AlertCircle,
+  Code,
+  ExternalLink,
+  Pencil,
+  Plus,
+  Trash2,
+  Wand2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+interface Router {
+  entryPoints: string[];
+  rule: string;
+  service: string;
+  middlewares?: string[];
+  priority?: number;
+  tls?: { certResolver?: string; passthrough?: boolean };
+}
+
+/* ===========================
+   Rule Builder Types
+=========================== */
+type RuleBlock =
+  | { type: "host"; value: string }
+  | { type: "hostRegexp"; value: string }
+  | { type: "path"; value: string }
+  | { type: "pathPrefix"; value: string }
+  | { type: "method"; value: string };
+
+function compileRule(blocks: RuleBlock[]): string {
+  if (!blocks.length) return "";
+  return blocks
+    .map((b) => {
+      switch (b.type) {
+        case "host":
+          return `Host(\`${b.value}\`)`;
+        case "hostRegexp":
+          return `HostRegexp(\`${b.value}\`)`;
+        case "path":
+          return `Path(\`${b.value}\`)`;
+        case "pathPrefix":
+          return `PathPrefix(\`${b.value}\`)`;
+        case "method":
+          return `Method(\`${b.value}\`)`;
+      }
+    })
+    .join(" && ");
+}
+
+/* ===========================
+   Rule Display Component
+=========================== */
+function RuleDisplay({ rule }: { rule: string }) {
+  const parts = rule.split(" && ");
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {parts.map((part, i) => {
+        const match = part.match(/^(\w+)\(`([^`]+)`\)$/);
+        if (!match)
+          return (
+            <Badge key={i} variant="outline">
+              {part}
+            </Badge>
+          );
+
+        const [, type, value] = match;
+        let variant: "default" | "secondary" | "outline" = "outline";
+        let displayType = type;
+
+        switch (type) {
+          case "Host":
+            variant = "default";
+            break;
+          case "Path":
+          case "PathPrefix":
+            variant = "secondary";
+            break;
+          case "Method":
+            displayType = "method";
+            break;
+          case "HostRegexp":
+            displayType = "regex";
+            break;
+        }
+
+        return (
+          <div key={i} className="flex items-center gap-1">
+            {i > 0 && <span className="text-muted-foreground text-sm">&&</span>}
+            <Badge variant={variant} className="font-mono text-xs">
+              {displayType}: {value}
+            </Badge>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ===========================
+   Rule Builder Component
+=========================== */
+function RuleBuilder({
+  mode,
+  setMode,
+  domain,
+  setDomain,
+  useRegex,
+  setUseRegex,
+  path,
+  setPath,
+  usePathPrefix,
+  setUsePathPrefix,
+  methods,
+  setMethods,
+  rawRule,
+  setRawRule,
+}: {
+  mode: "simple" | "advanced";
+  setMode: (mode: "simple" | "advanced") => void;
+  domain: string;
+  setDomain: (domain: string) => void;
+  useRegex: boolean;
+  setUseRegex: (use: boolean) => void;
+  path: string;
+  setPath: (path: string) => void;
+  usePathPrefix: boolean;
+  setUsePathPrefix: (use: boolean) => void;
+  methods: string[];
+  setMethods: (methods: string[]) => void;
+  rawRule: string;
+  setRawRule: (rule: string) => void;
+}) {
+  const compiledRule = compileRule(
+    [
+      domain
+        ? useRegex
+          ? { type: "hostRegexp", value: domain }
+          : { type: "host", value: domain }
+        : null,
+      path
+        ? usePathPrefix
+          ? { type: "pathPrefix", value: path }
+          : { type: "path", value: path }
+        : null,
+      ...methods.map((m) => ({ type: "method", value: m })),
+    ].filter(Boolean) as RuleBlock[]
+  );
+
+  const exampleRules = [
+    { label: "Basic Domain", value: "Host(`example.com`)" },
+    { label: "Domain with Path", value: "Host(`example.com`) && Path(`/api`)" },
+    {
+      label: "Multiple Domains",
+      value: "Host(`api.example.com`, `api.test.com`)",
+    },
+    { label: "Regex Domain", value: "HostRegexp(`^api\\..+\\.com$`)" },
+    {
+      label: "Path Prefix",
+      value: "Host(`example.com`) && PathPrefix(`/v2/`)",
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-base font-semibold">Rule Configuration</Label>
+        <Tabs
+          value={mode}
+          onValueChange={(v) => setMode(v as "simple" | "advanced")}
+        >
+          <TabsList>
+            <TabsTrigger value="simple" className="flex items-center gap-2">
+              <Wand2 className="h-4 w-4" />
+              Simple Builder
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              Raw Rule
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {mode === "simple" ? (
+        <div className="space-y-4 rounded-lg border p-4">
+          <div className="space-y-2">
+            <Label htmlFor="domain" className="flex items-center gap-2">
+              Domain
+              <Badge variant="outline" className="text-xs">
+                Required
+              </Badge>
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="domain"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                placeholder="example.com or ^api\..+\.com$"
+                className="flex-1"
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="useRegex"
+                  checked={useRegex}
+                  onCheckedChange={(v) => setUseRegex(!!v)}
+                />
+                <Label htmlFor="useRegex" className="text-sm cursor-pointer">
+                  Regex
+                </Label>
+              </div>
+            </div>
+            {useRegex && (
+              <div className="flex items-center gap-2 text-sm text-amber-600">
+                <AlertCircle className="h-4 w-4" />
+                <span>
+                  Use ^api\\..+\\.com$ for domains starting with "api."
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="path" className="text-muted-foreground">
+              Path (Optional)
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="path"
+                value={path}
+                onChange={(e) => setPath(e.target.value)}
+                placeholder="/api or /v2/users"
+                className="flex-1"
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="usePathPrefix"
+                  checked={usePathPrefix}
+                  onCheckedChange={(v) => setUsePathPrefix(!!v)}
+                />
+                <Label
+                  htmlFor="usePathPrefix"
+                  className="text-sm cursor-pointer"
+                >
+                  Prefix
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">
+              HTTP Methods (Optional)
+            </Label>
+            <MultiSelect values={methods} onValuesChange={setMethods}>
+              <MultiSelectTrigger>
+                <MultiSelectValue placeholder="Select methods..." />
+              </MultiSelectTrigger>
+              <MultiSelectContent>
+                <MultiSelectGroup>
+                  {[
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE",
+                    "PATCH",
+                    "HEAD",
+                    "OPTIONS",
+                  ].map((m) => (
+                    <MultiSelectItem key={m} value={m}>
+                      {m}
+                    </MultiSelectItem>
+                  ))}
+                </MultiSelectGroup>
+              </MultiSelectContent>
+            </MultiSelect>
+          </div>
+
+          {compiledRule && (
+            <div className="space-y-2 rounded-md bg-muted/50 p-3">
+              <Label className="text-sm">Generated Rule</Label>
+              <RuleDisplay rule={compiledRule} />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Code className="h-3 w-3" />
+                <code className="text-xs">{compiledRule}</code>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-lg border p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="rawRule">Raw Rule Expression</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRawRule(compiledRule)}
+                  disabled={!domain}
+                >
+                  Use Simple Builder Rule
+                </Button>
+              </div>
+              <textarea
+                id="rawRule"
+                value={rawRule}
+                onChange={(e) => setRawRule(e.target.value)}
+                placeholder="Host(`example.com`) && PathPrefix(`/api`)"
+                className="w-full min-h-[100px] font-mono text-sm p-3 rounded-md border bg-background resize-y"
+                spellCheck={false}
+              />
+              <div className="space-y-2">
+                <Label className="text-sm">Quick Examples:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {exampleRules.map((example, i) => (
+                    <Button
+                      key={i}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRawRule(example.value)}
+                      className="h-auto py-1 px-2 text-xs"
+                    >
+                      {example.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===========================
+   YAML Preview Component
+=========================== */
+function YAMLPreview({ router, name }: { router: Router; name: string }) {
+  const yamlContent = `# Router Configuration Preview
+http:
+  routers:
+    ${name}:
+      entryPoints: [${router.entryPoints.map((ep) => `"${ep}"`).join(", ")}]
+      rule: "${router.rule}"
+      service: ${router.service}
+      ${
+        router.middlewares?.length
+          ? `middlewares: [${router.middlewares
+              .map((m) => `"${m}"`)
+              .join(", ")}]`
+          : ""
+      }
+      ${router.priority ? `priority: ${router.priority}` : ""}
+      ${
+        router.tls?.certResolver
+          ? `tls:
+        certResolver: "${router.tls.certResolver}"`
+          : ""
+      }`;
+
+  return (
+    <div className="space-y-2 rounded-lg border p-4">
+      <div className="flex items-center justify-between">
+        <Label className="flex items-center gap-2">
+          <Code className="h-4 w-4" />
+          YAML Configuration Preview
+        </Label>
+        <Badge variant="outline" className="font-mono text-xs">
+          {name || "router-name"}
+        </Badge>
+      </div>
+      <pre className="text-sm bg-muted/30 p-3 rounded-md overflow-x-auto font-mono whitespace-pre-wrap">
+        {yamlContent}
+      </pre>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <ExternalLink className="h-3 w-3" />
+        <span>
+          This is how the router will appear in your Traefik configuration file
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ===========================
+   Page Component
+=========================== */
+export default function RoutersPage() {
+  const [routers, setRouters] = useState<Record<string, Router>>({});
+  const [services, setServices] = useState<string[]>([]);
+  const [internalServices, setInternalServices] = useState<string[]>([]);
+  const [middlewaresList, setMiddlewaresList] = useState<string[]>([]);
+  const [protocol, setProtocol] = useState<"http" | "tcp" | "udp">("http");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRouterName, setEditingRouterName] = useState<string | null>(
+    null
+  );
+
+  /* ===========================
+     Router Fields
+  =========================== */
+  const [name, setName] = useState("");
+  const [service, setService] = useState("");
+  const [entryPoints, setEntryPoints] = useState<string[]>(["websecure"]);
+  const [middlewares, setMiddlewares] = useState<string[]>([]);
+  const [priority, setPriority] = useState<number | undefined>();
+  const [tlsEnabled, setTlsEnabled] = useState(false);
+  const [certResolver, setCertResolver] = useState("");
+
+  /* ===========================
+     Rule Builder State
+  =========================== */
+  const [mode, setMode] = useState<"simple" | "advanced">("simple");
+  const [domain, setDomain] = useState("");
+  const [useRegex, setUseRegex] = useState(false);
+  const [path, setPath] = useState("");
+  const [usePathPrefix, setUsePathPrefix] = useState(false);
+  const [methods, setMethods] = useState<string[]>([]);
+  const [rawRule, setRawRule] = useState("");
+
+  /* ===========================
+     Fetch Config
+  =========================== */
+  const fetchAll = async () => {
+    try {
+      setIsLoading(true);
+      const routerEndpoint =
+        protocol === "http"
+          ? "/traefik/routers"
+          : `/traefik/${protocol}/routers`;
+      const serviceEndpoint =
+        protocol === "http"
+          ? "/traefik/services"
+          : `/traefik/${protocol}/services`;
+
+      const [r, s, m, is] = await Promise.all([
+        api.get(routerEndpoint),
+        api.get(serviceEndpoint),
+        protocol === "http"
+          ? api.get("/traefik/middlewares")
+          : Promise.resolve({ data: {} }),
+        api.get("/traefik/status/services"),
+      ]);
+      setRouters(r.data);
+      setServices(Object.keys(s.data));
+      setInternalServices(is.data?.map((s: any) => s.name));
+      setMiddlewaresList(Object.keys(m.data));
+    } catch {
+      toast.error("Failed to load Traefik configuration");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+  }, [protocol]);
+
+  /* ===========================
+     Open / Edit
+  =========================== */
+  const openAddModal = () => {
+    setEditingRouterName(null);
+    setName("");
+    setService("");
+    setEntryPoints(["websecure"]);
+    setMiddlewares([]);
+    setPriority(undefined);
+    setTlsEnabled(false);
+    setCertResolver("");
+    setMode("simple");
+    setDomain("");
+    setUseRegex(false);
+    setPath("");
+    setUsePathPrefix(false);
+    setMethods([]);
+    setRawRule("");
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (routerName: string, r: Router) => {
+    setEditingRouterName(routerName);
+    setName(routerName);
+    setService(r.service);
+    setEntryPoints(r.entryPoints || []);
+    setMiddlewares(r.middlewares || []);
+    setPriority(r.priority);
+    setTlsEnabled(!!r.tls);
+    setCertResolver(r.tls?.certResolver || "");
+    setRawRule(r.rule);
+    setMode("advanced");
+    setIsModalOpen(true);
+  };
+
+  /* ===========================
+     Delete
+  =========================== */
+  const handleDelete = async (routerName: string) => {
+    if (!confirm(`Delete router "${routerName}"?`)) return;
+    try {
+      const endpoint =
+        protocol === "http"
+          ? "/traefik/routers"
+          : `/traefik/${protocol}/routers`;
+      await api.delete(`${endpoint}/${routerName}`);
+      toast.success("Router deleted");
+      fetchAll();
+    } catch {
+      toast.error("Failed to delete router");
+    }
+  };
+
+  /* ===========================
+     Submit
+  =========================== */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      toast.error("Router name is required");
+      return;
+    }
+
+    let compiledRule = "";
+    if (protocol === "http") {
+      compiledRule =
+        mode === "simple"
+          ? compileRule(
+              [
+                domain
+                  ? useRegex
+                    ? { type: "hostRegexp", value: domain }
+                    : { type: "host", value: domain }
+                  : null,
+                path
+                  ? usePathPrefix
+                    ? { type: "pathPrefix", value: path }
+                    : { type: "path", value: path }
+                  : null,
+                ...methods.map((m) => ({ type: "method", value: m })),
+              ].filter(Boolean) as RuleBlock[]
+            )
+          : rawRule;
+    } else if (protocol === "tcp") {
+      compiledRule = rawRule; // For TCP, we just use the raw rule input for HostSNI
+    }
+
+    if (protocol !== "udp" && !compiledRule.trim()) {
+      toast.error("Rule is required");
+      return;
+    }
+
+    if (!service) {
+      toast.error("Service is required");
+      return;
+    }
+
+    const payload: Router = {
+      entryPoints,
+      rule: protocol === "udp" ? "" : compiledRule,
+      service,
+    };
+    if (protocol === "http") {
+      if (middlewares.length) payload.middlewares = middlewares;
+      if (priority !== undefined) payload.priority = priority;
+    }
+    if (protocol !== "udp")
+      payload.tls = !tlsEnabled
+        ? {}
+        : certResolver
+        ? { certResolver }
+        : protocol === "tcp"
+        ? { passthrough: true }
+        : {};
+
+    try {
+      console.log(payload);
+
+      const endpoint =
+        protocol === "http"
+          ? "/traefik/routers"
+          : `/traefik/${protocol}/routers`;
+      await api.post(`${endpoint}/${name}`, payload);
+
+      toast.success("Router saved successfully");
+      setIsModalOpen(false);
+      fetchAll();
+    } catch {
+      toast.error("Failed to save router");
+    }
+  };
+
+  /* ===========================
+     Render Router Modal
+  =========================== */
+  const renderRouterForm = () => {
+    const currentRouter: Router = {
+      entryPoints,
+      rule:
+        protocol === "http"
+          ? mode === "simple"
+            ? compileRule(
+                [
+                  domain
+                    ? useRegex
+                      ? { type: "hostRegexp", value: domain }
+                      : { type: "host", value: domain }
+                    : null,
+                  path
+                    ? usePathPrefix
+                      ? { type: "pathPrefix", value: path }
+                      : { type: "path", value: path }
+                    : null,
+                  ...methods.map((m) => ({ type: "method", value: m })),
+                ].filter(Boolean) as RuleBlock[]
+              )
+            : rawRule
+          : rawRule,
+      service,
+      middlewares: middlewares.length ? middlewares : undefined,
+      priority,
+      tls: tlsEnabled
+        ? certResolver
+          ? { certResolver }
+          : protocol === "tcp"
+          ? { passthrough: true }
+          : {}
+        : undefined,
+    };
+
+    return (
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {editingRouterName ? (
+              <>
+                <Pencil className="h-5 w-5" />
+                Edit Router:{" "}
+                <Badge variant="outline">{editingRouterName}</Badge>
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5" />
+                Create New Router
+              </>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form className="grid gap-6" onSubmit={handleSubmit}>
+          <div className="grid gap-4 rounded-lg border p-4">
+            <Label className="text-base font-semibold">Basic Information</Label>
+            <div className="grid gap-3">
+              <div>
+                <Label htmlFor="routerName" className="mb-2 block">
+                  Router Name
+                </Label>
+                <Input
+                  id="routerName"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={!!editingRouterName}
+                  placeholder="my-router"
+                  className="font-mono"
+                />
+              </div>
+              <div>
+                <Label htmlFor="service" className="mb-2 block">
+                  Service{" "}
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    Required
+                  </Badge>
+                </Label>
+                <Select value={service} onValueChange={setService}>
+                  <SelectTrigger id="service">
+                    <SelectValue placeholder="Select a service..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[...services, ...internalServices].map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {protocol === "http" && (
+            <RuleBuilder
+              mode={mode}
+              setMode={setMode}
+              domain={domain}
+              setDomain={setDomain}
+              useRegex={useRegex}
+              setUseRegex={setUseRegex}
+              path={path}
+              setPath={setPath}
+              usePathPrefix={usePathPrefix}
+              setUsePathPrefix={setUsePathPrefix}
+              methods={methods}
+              setMethods={setMethods}
+              rawRule={rawRule}
+              setRawRule={setRawRule}
+            />
+          )}
+
+          {protocol === "tcp" && (
+            <div className="grid gap-4 rounded-lg border p-4">
+              <Label>Rule</Label>
+              <Input
+                value={rawRule}
+                onChange={(e) => setRawRule(e.target.value)}
+                placeholder="HostSNI(`example.com`)"
+              />
+            </div>
+          )}
+
+          <div className="grid gap-4 rounded-lg border p-4">
+            <Label className="text-base font-semibold">
+              Additional Settings
+            </Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <Label>Entry Points</Label>
+                <div className="flex flex-col gap-2">
+                  {(protocol === "udp" ? ["udp"] : ["web", "websecure"]).map(
+                    (ep) => (
+                      <label key={ep} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={entryPoints.includes(ep)}
+                          onCheckedChange={(v) =>
+                            setEntryPoints(
+                              v
+                                ? [...entryPoints, ep]
+                                : entryPoints.filter((e) => e !== ep)
+                            )
+                          }
+                        />
+                        <span className="text-sm">{ep}</span>
+                        {ep === "websecure" && (
+                          <Badge variant="secondary" className="text-xs">
+                            Default
+                          </Badge>
+                        )}
+                      </label>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {protocol === "http" && (
+                <div className="space-y-3">
+                  <Label>Middlewares (Optional)</Label>
+                  <MultiSelect
+                    values={middlewares}
+                    onValuesChange={setMiddlewares}
+                  >
+                    <MultiSelectTrigger>
+                      <MultiSelectValue placeholder="Select middlewares..." />
+                    </MultiSelectTrigger>
+                    <MultiSelectContent>
+                      <MultiSelectGroup>
+                        {middlewaresList.map((m) => (
+                          <MultiSelectItem key={m} value={m}>
+                            {m}
+                          </MultiSelectItem>
+                        ))}
+                      </MultiSelectGroup>
+                    </MultiSelectContent>
+                  </MultiSelect>
+                </div>
+              )}
+            </div>
+
+            {protocol !== "udp" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority (Optional)</Label>
+                  <Input
+                    id="priority"
+                    type="number"
+                    value={priority ?? ""}
+                    onChange={(e) =>
+                      setPriority(
+                        e.target.value ? Number(e.target.value) : undefined
+                      )
+                    }
+                    placeholder="0-100"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={tlsEnabled}
+                      onCheckedChange={(v) => setTlsEnabled(!!v)}
+                    />
+                    Enable TLS {protocol === "tcp" && "(Passthrough)"}
+                  </Label>
+                  {tlsEnabled && protocol === "http" && (
+                    <Input
+                      value={certResolver}
+                      onChange={(e) => setCertResolver(e.target.value)}
+                      placeholder="letsencrypt"
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {name && <YAMLPreview router={currentRouter} name={name} />}
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">
+              {editingRouterName ? "Update Router" : "Create Router"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    );
+  };
+
+  /* ===========================
+     Render
+  =========================== */
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Routers</h1>
+          <Tabs value={protocol} onValueChange={(v) => setProtocol(v as any)}>
+            <TabsList>
+              <TabsTrigger value="http">HTTP</TabsTrigger>
+              <TabsTrigger value="tcp">TCP</TabsTrigger>
+              <TabsTrigger value="udp">UDP</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        <div>
+          <p className="text-muted-foreground">
+            Define rules to route incoming HTTP requests to services
+          </p>
+        </div>
+        <Button onClick={openAddModal}>
+          <Plus className="mr-2 h-4 w-4" /> Add Router
+        </Button>
+      </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        {renderRouterForm()}
+      </Dialog>
+
+      {isLoading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading routers...</p>
+        </div>
+      ) : Object.keys(routers).length === 0 ? (
+        <div className="text-center py-12 rounded-lg border-2 border-dashed">
+          <Wand2 className="h-12 w-12 mx-auto text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold">No routers configured</h3>
+          <p className="text-muted-foreground mt-2">
+            Get started by creating your first router
+          </p>
+          <Button onClick={openAddModal} className="mt-4">
+            <Plus className="mr-2 h-4 w-4" /> Create Router
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Rule</TableHead>
+                <TableHead>Service</TableHead>
+                <TableHead>Entry Points</TableHead>
+                <TableHead>TLS</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(routers).map(([n, r]) => (
+                <TableRow key={n} className="group">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {n}
+                      {protocol === "http" && r.priority !== undefined && (
+                        <Badge variant="outline" className="text-xs">
+                          Prio: {r.priority}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {protocol === "http" ? (
+                      <RuleDisplay rule={r.rule} />
+                    ) : (
+                      r.rule || "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{r.service}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {(r?.entryPoints || []).map((ep) => (
+                        <Badge key={ep} variant="outline" className="text-xs">
+                          {ep}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {r.tls ? (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                        {r.tls.certResolver ||
+                          (r.tls.passthrough ? "Passthrough" : "Enabled")}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleEdit(n, r)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleDelete(n)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}

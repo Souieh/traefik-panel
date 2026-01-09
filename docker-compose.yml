@@ -1,0 +1,47 @@
+
+
+services:
+  tpm-traefik:
+    image: traefik:v3
+    container_name: tpm-traefik
+    restart: unless-stopped
+    command:
+      - --api.dashboard=true 
+      - --entrypoints.traefik.address=:8080
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true
+
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443 
+
+    ports:
+      - "80:80"
+      - "443:443" 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/certs:/certs
+      - ./data/dynamic:/dynamic:ro
+      - ./data:/data:ro
+
+    networks:
+      - tpm-net
+  tpm-panel:
+    build: .
+    container_name: tpm-panel
+    restart: unless-stopped
+    depends_on:
+      - tpm-traefik
+    volumes:
+      - ./data:/data
+    ports:
+      - "5000:8080"
+    networks:
+      - tpm-net
+
+
+networks:
+  tpm-net:
+    driver: bridge
+
