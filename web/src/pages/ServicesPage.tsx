@@ -115,20 +115,33 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div className="flex items-start flex-col gap-2 flex-wrap">
           <h1 className="text-2xl font-bold">Services</h1>
-          <Tabs value={protocol} onValueChange={(v) => setProtocol(v as any)}>
-            <TabsList>
-              <TabsTrigger value="http">HTTP</TabsTrigger>
-              <TabsTrigger value="tcp">TCP</TabsTrigger>
-              <TabsTrigger value="udp">UDP</TabsTrigger>
+          <p className="text-muted-foreground">Manage your Traefik services.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Tabs
+            value={protocol}
+            onValueChange={(v) => setProtocol(v as any)}
+            className="flex-1"
+          >
+            <TabsList className="flex">
+              <TabsTrigger className="flex-1" value="http">
+                HTTP
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="tcp">
+                TCP
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="udp">
+                UDP
+              </TabsTrigger>
             </TabsList>
           </Tabs>
+          <Button onClick={openAddModal} className="flex-1">
+            <Plus className="mr-2 h-4 w-4" /> Add Service
+          </Button>
         </div>
-        <Button onClick={openAddModal}>
-          <Plus className="mr-2 h-4 w-4" /> Add Service
-        </Button>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

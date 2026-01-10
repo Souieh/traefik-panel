@@ -1,7 +1,7 @@
 from typing import Union 
 from pydantic import BaseModel, ConfigDict
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 
@@ -59,6 +59,7 @@ class TraefikLoadBalancer(BaseModel):
 class TraefikService(BaseModel):
     loadBalancer: TraefikLoadBalancer
 
+
 class TraefikTLS(BaseModel):
     certResolver: Optional[str] = None
     passthrough: Optional[bool] = None
@@ -71,3 +72,24 @@ class TraefikRouter(BaseModel):
     middlewares: Optional[List[str]] = None
     priority: Optional[int] = None
     tls: Optional[TraefikTLS] = None
+
+class TraefikMiddleware(BaseModel):
+    basicauth: Optional[Dict[str, Any]] = None
+    headers: Optional[Dict[str, Any]] = None
+    digestauth: Optional[Dict[str, Any]] = None
+    chain: Optional[Dict[str, Any]] = None
+    compress: Optional[Dict[str, Any]] = None
+    errorpage: Optional[Dict[str, Any]] = None
+    ipwhitelist: Optional[Dict[str, Any]] = None
+    ratelimit: Optional[Dict[str, Any]] = None
+    redirectregex: Optional[Dict[str, Any]] = None
+    redirectscheme: Optional[Dict[str, Any]] = None
+    replacepath: Optional[Dict[str, Any]] = None
+    replacepathregex: Optional[Dict[str, Any]] = None
+    stripprefix: Optional[Dict[str, Any]] = None
+    stripprefixregex: Optional[Dict[str, Any]] = None
+    retry: Optional[Dict[str, Any]] = None
+    requestheader: Optional[Dict[str, Any]] = None
+
+    class Config:
+        extra = "allow"  # still allows unknown or future middleware types

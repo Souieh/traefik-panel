@@ -879,25 +879,35 @@ export default function RoutersPage() {
   =========================== */
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div className="flex  items-start flex-col gap-2 flex-wrap">
           <h1 className="text-2xl font-bold">Routers</h1>
-          <Tabs value={protocol} onValueChange={(v) => setProtocol(v as any)}>
-            <TabsList>
-              <TabsTrigger value="http">HTTP</TabsTrigger>
-              <TabsTrigger value="tcp">TCP</TabsTrigger>
-              <TabsTrigger value="udp">UDP</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        <div>
           <p className="text-muted-foreground">
             Define rules to route incoming HTTP requests to services
           </p>
         </div>
-        <Button onClick={openAddModal}>
-          <Plus className="mr-2 h-4 w-4" /> Add Router
-        </Button>
+        <div className="flex  items-center gap-4 flex-wrap">
+          <Tabs
+            className="flex-1"
+            value={protocol}
+            onValueChange={(v) => setProtocol(v as any)}
+          >
+            <TabsList className="flex justify-stretch">
+              <TabsTrigger className="flex-1" value="http">
+                HTTP
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="tcp">
+                TCP
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="udp">
+                UDP
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button className="flex-1" onClick={openAddModal}>
+            <Plus className="mr-2 h-4 w-4" /> Add Router
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

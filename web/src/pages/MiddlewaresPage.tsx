@@ -192,7 +192,7 @@ function ConfigPreview({
         );
     }
   };
-
+  return JSON.stringify(config, null, 2);
   return <div className="text-sm">{renderConfig()}</div>;
 }
 
@@ -972,16 +972,18 @@ export default function MiddlewaresPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+      <div className=" flex justify-between  items-center flex-wrap gap-4">
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">Middlewares</h1>
           <p className="text-muted-foreground">
             Add security, routing, and transformation rules to your traffic
           </p>
         </div>
-        <Button onClick={openAddModal}>
-          <Plus className="mr-2 h-4 w-4" /> Add Middleware
-        </Button>
+        <div>
+          <Button onClick={openAddModal} className="flex-1">
+            <Plus className="mr-2 h-4 w-4" /> Add Middleware
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -1023,7 +1025,7 @@ export default function MiddlewaresPage() {
                   (Object.keys(data)[0] as MiddlewareType) || "Unknown";
                 const config =
                   data[type.toLowerCase() as keyof MiddlewareConfig] || {};
-                const Icon = typeIcons[type] || Shield;
+                const Icon = typeIcons[type] || <Shield className="h-4 w-4" />;
 
                 return (
                   <TableRow key={name} className="group">

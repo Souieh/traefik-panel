@@ -67,9 +67,14 @@ export function Navbar() {
     )?.href || (pathname.startsWith("/settings") ? "/settings" : "/dashboard");
 
   return (
-    <header className="sticky top-0 z-30 block   gap-8 border-b bg-white   shadow-sm shadow-gray-100 hover:shadow-lg ">
-      <div className="flex-1 border-b-1">
-        <div className=" w-full max-w-7xl mx-auto flex-1 flex flex-row py-4 px-4 sm:px-6 lg:px-8">
+    <header
+      className={
+        "sticky w-full pa  top-0 z-30 block   gap-8 border-b bg-white   shadow-sm shadow-gray-100 hover:shadow-lg "
+      }
+    >
+      {/* Top Bar: Allegedly the main navigation area */}
+      <div className="flex-1 border-b">
+        <div className="  max-w-7xl mx-auto  flex flex-wrap flex-row items-center py-4 px-4 sm:px-6 lg:px-8">
           <div className="md:hidden mr-2 flex items-center">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
@@ -137,9 +142,10 @@ export function Navbar() {
           </div>
         </div>
       </div>
-      <div className="hidden md:block w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Desktop Nav: Supposedly visible on larger screens */}
+      <div className="hidden md:block  max-w-7xl mx-auto ">
         <Tabs value={activeTab} className="w-full">
-          <TabsList className="w-full justify-start h-auto p-0 bg-transparent">
+          <TabsList className="w-full justify-start h-auto p-0 bg-transparent overflow-x-auto">
             {navItems.map((item) => (
               <TabsTrigger
                 key={item.href}

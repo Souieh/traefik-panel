@@ -461,7 +461,7 @@ export default function UserManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users className="h-6 w-6" /> User Management
@@ -477,17 +477,17 @@ export default function UserManagementPage() {
         )}
       </div>
 
-      <Card>
+      <Card className=" overflow-x-auto">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               <CardTitle>Users</CardTitle>
               <CardDescription>
                 {users.length} user{users.length !== 1 ? "s" : ""} in the system
               </CardDescription>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="relative w-64">
+            <div className="flex items-center gap-3 flex-wrap ">
+              <div className="relative min-w-46 flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users..."
@@ -673,7 +673,7 @@ export default function UserManagementPage() {
       </Card>
 
       {isAdmin && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2  gap-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">

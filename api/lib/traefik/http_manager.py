@@ -4,8 +4,9 @@ from core.config import settings
 
 class HttpManager:
     def __init__(self):
-        self.config_file = settings.traefik_config_file
-        self.config_resolver_file =  settings.traefik_config_resolver_file
+        self.config_file = settings.traefik_config_file 
+        if not os.path.exists(self.config_file):
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
 
     def _read_config(self):
         if not os.path.exists(self.config_file):
@@ -57,6 +58,11 @@ class HttpManager:
             if "services" not in config["http"]:
                 config["http"]["services"] = {}
             config["http"]["services"][name] = service_data
+        else:
+            if "services" in config["http"]:
+                del config["http"]["services"][name]
+
+
         self._write_config(config)
 
     def delete_service(self, name: str):
@@ -75,9 +81,13 @@ class HttpManager:
         config = self._read_config()
         if "http" not in config:
             config["http"] = {}
-        if "middlewares" not in config["http"]:
-            config["http"]["middlewares"] = {}
-        config["http"]["middlewares"][name] = middleware_data
+        if middleware_data is None:
+            if "middlewares" in config["http"]:
+                del config["http"]["middlewares"]
+        else:
+            if "middlewares" not in config["http"]:
+                config["http"]["middlewares"] = {}
+            config["http"]["middlewares"][name] = middleware_data
         self._write_config(config)
 
     def delete_middleware(self, name: str):
