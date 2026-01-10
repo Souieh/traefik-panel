@@ -1,6 +1,6 @@
-# Traefik Proxy Manager (TPM)
+# Traefik Panel (TP)
 
-**Traefik Proxy Manager (TPM)** is a comprehensive dashboard and management tool for Traefik. It combines a modern web interface with a powerful backend to simplify the management of Traefik configurations, routes, and services.
+**Traefik Panel (TP)** is a comprehensive dashboard and management tool for Traefik. It combines a modern web interface with a powerful backend to simplify the management of Traefik configurations, routes, and services.
 
 ## 🚀 Features
 
@@ -57,7 +57,7 @@ The project consists of two main components bundled into a single container:
     cp .env.example .env
 ```
 
-3.  Run the api
+3. Run the api
 
 ```bash
     make run
