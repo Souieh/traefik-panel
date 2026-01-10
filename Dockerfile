@@ -33,7 +33,6 @@ COPY --from=vite-builder /app/web/dist ./web
 # Copy .env file
 COPY .env .env
 
-RUN python  seed.py
 
 
 # Expose the port FastAPI will run on
