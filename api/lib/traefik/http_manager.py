@@ -28,7 +28,8 @@ class HttpManager:
 
     def update_router(self, name: str, router_data: dict):
         config = self._read_config()
-        print(router_data)
+        if not router_data:
+            return
         if "http" not in config:
             config["http"] = {}
         if "routers" not in config["http"]:
@@ -50,9 +51,12 @@ class HttpManager:
         config = self._read_config()
         if "http" not in config:
             config["http"] = {}
-        if "services" not in config["http"]:
-            config["http"]["services"] = {}
-        config["http"]["services"][name] = service_data
+
+        # Only create 'services' if service_data is non-empty
+        if service_data:
+            if "services" not in config["http"]:
+                config["http"]["services"] = {}
+            config["http"]["services"][name] = service_data
         self._write_config(config)
 
     def delete_service(self, name: str):
