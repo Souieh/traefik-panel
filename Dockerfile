@@ -5,11 +5,16 @@ FROM node:20-alpine AS vite-builder
 
 WORKDIR /app/web
 
-# Install dependencies
-COPY web/ .
+# Copy root package files if using workspace
+COPY web/package*.json ./
+COPY web/pnpm-*.yaml ./
+
 RUN npm install -g pnpm
 RUN pnpm install --frozen-lockfile
-RUN npm run build
+
+
+COPY web/ .
+RUN pnpm run build
 
 # =============================
 # Stage 2: Final FastAPI image
