@@ -618,8 +618,6 @@ export default function RoutersPage() {
         : {};
 
     try {
-      console.log(payload);
-
       const endpoint =
         protocol === "http"
           ? "/traefik/routers"
