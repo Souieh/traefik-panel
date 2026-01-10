@@ -13,7 +13,7 @@ async def read_users_me(
 ):
     return current_user
 
-@router.get("/users/", response_model=List[User])
+@router.get("/users", response_model=List[User])
 async def read_users(
     skip: int = 0,
     limit: int = 100,

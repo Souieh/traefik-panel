@@ -103,9 +103,11 @@ export default function StatusPage() {
       ]);
 
       setData({
-        routers: routersRes.data || [],
-        services: servicesRes.data || [],
-        middlewares: middlewaresRes.data || [],
+        routers: Array.isArray(routersRes.data) ? routersRes.data : [],
+        services: Array.isArray(servicesRes.data) ? servicesRes.data : [],
+        middlewares: Array.isArray(middlewaresRes.data)
+          ? middlewaresRes.data
+          : [],
       });
     } catch (error) {
       toast.error("Failed to fetch status data");
