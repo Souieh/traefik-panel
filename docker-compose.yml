@@ -1,14 +1,15 @@
 
 
 services:
-  tpm-traefik:
+  tp-traefik:
     image: traefik:v3
-    container_name: tpm-traefik
+    container_name: tp-traefik
     restart: unless-stopped
     command:
       - --api.dashboard=true 
+      - --api.insecure=false 
       - --ping=true
-      - --ping.entrypoint=traefik
+      - --ping.entrypoint=traefik 
       - --entrypoints.traefik.address=:8080
 
       - --providers.docker=true
@@ -31,14 +32,12 @@ services:
       - tpm-net
 
 
-  tpm-panel:
+  tp-panel:
     build: .
-    container_name: tpm-panel
-    user: "1000:1000" 
-    
+    container_name: tp-panel
     restart: unless-stopped
     depends_on:
-      - tpm-traefik
+      - tp-traefik
     volumes:
       - ./data:/app/data
     ports:

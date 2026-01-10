@@ -3,7 +3,7 @@ from core.config import settings
 
 class TraefikApiService:
     def __init__(self):
-        self.base_url = settings.traefik_api_url.rstrip("/")
+        self.base_url = settings.traefik_api_url.rstrip("/") 
 
     async def _get(self, path: str):
         async with httpx.AsyncClient() as client:
@@ -17,17 +17,21 @@ class TraefikApiService:
                 return {"error": f"HTTP error {exc.response.status_code}"}
             
     async def _better_get(self, path:str):
-        result = await self._get(path)
+        result = await self._get("/api"+    path )
         if isinstance(result, dict) and "error" in result:
             # Handle or raise the error
             return [] 
         return result
 
     async def get_status(self):
-        # 1. Liveness
-        ping = await self._get("/ping")
-        if "error" in ping:
-            return {"status": "DOWN", "details": ping}
+        # 1. Liveness (special case)
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{self.base_url}/ping")
+                if response.status_code != 200 or response.text.strip() != "OK":
+                    return {"status": "DOWN", "details": {"text": response.text}}
+        except Exception as exc:
+            return {"status": "DOWN", "details": {"error": str(exc)}}
 
         # 2. Raw config validation
         raw = await self._get("/rawdata")
@@ -49,7 +53,7 @@ class TraefikApiService:
             return {"status": "EMPTY"}
 
         return {"status": "RUNNING"}
- 
+
 
     async def get_overview(self):
         return await self._get("/overview")

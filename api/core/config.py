@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     smtp_username: str
     smtp_password: str
     sender_email: str
-
+    
+    traefik_api_config_file: str = "data/dynamic/traefik_api.yaml"
     traefik_config_file: str = "data/dynamic/traefik_dynamic.yaml"
     traefik_config_resolver_file: str = "./data/static/resolver.yml"
     traefik_api_url: str  
