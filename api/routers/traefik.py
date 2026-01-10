@@ -1,6 +1,6 @@
 from typing import Annotated, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from core.models import User, TraefikRouter, TraefikService
+from core.models import User, TraefikRouter, TraefikService , TraefikMiddleware
 from lib.dependencies import get_current_active_user
 from lib.traefik.certificate_resolver_manager import CertificatesResolversManager
 from lib.traefik.http_manager import HttpManager
@@ -57,8 +57,8 @@ async def get_middlewares():
     return manager.get_middlewares()
 
 @router.post("/middlewares/{name}")
-async def update_middleware(name: str, middleware_data: Dict[str, Any]):
-    manager.update_middleware(name, middleware_data)
+async def update_middleware(name: str, middleware_data: TraefikMiddleware):
+    manager.update_middleware(name, middleware_data.model_dump(exclude_none=True))
     return {"msg": "Middleware updated"}
 
 @router.delete("/middlewares/{name}")
@@ -143,6 +143,10 @@ async def delete_udp_service(name: str):
     if not tcp_udp_manager.delete_udp_service(name):
         raise HTTPException(status_code=404, detail="UDP Service not found")
     return {"msg": "UDP Service deleted"}
+
+@router.get("/status/healthy")
+async def get_status():
+    return await api_service.get_status()
 
 @router.get("/status/routers")
 async def get_routers_status():

@@ -15,24 +15,64 @@ class TraefikApiService:
                 return {"error": f"Connection error: {exc}"}
             except httpx.HTTPStatusError as exc:
                 return {"error": f"HTTP error {exc.response.status_code}"}
+            
+    async def _better_get(self, path:str):
+        result = await self._get(path)
+        if isinstance(result, dict) and "error" in result:
+            # Handle or raise the error
+            return [] 
+        return result
 
+    async def get_status(self):
+        # 1. Liveness
+        ping = await self._get("/ping")
+        if "error" in ping:
+            return {"status": "DOWN", "details": ping}
+
+        # 2. Raw config validation
+        raw = await self._get("/rawdata")
+        providers = raw.get("providers", {})
+
+        for name, provider in providers.items():
+            if provider.get("error"):
+                return {
+                    "status": "BROKEN",
+                    "provider": name,
+                    "error": provider["error"],
+                }
+
+        # 3. Readiness
+        overview = await self._get("/overview")
+        http = overview.get("http", {})
+
+        if http.get("routers", 0) == 0:
+            return {"status": "EMPTY"}
+
+        return {"status": "RUNNING"}
+ 
+
+    async def get_overview(self):
+        return await self._get("/overview")
+
+    async def get_rawdata(self):
+        return await self._get("/rawdata")
     async def get_routers(self):
-        return await self._get("/http/routers")
+        return await self._better_get("/http/routers")
 
     async def get_services(self):
-        return await self._get("/http/services")
+        return await self._better_get("/http/services")
 
     async def get_middlewares(self):
-        return await self._get("/http/middlewares")
+        return await self._better_get("/http/middlewares")
 
     async def get_tcp_routers(self):
-        return await self._get("/tcp/routers")
+        return await self._better_get("/tcp/routers")
 
     async def get_tcp_services(self):
-        return await self._get("/tcp/services")
+        return await self._better_get("/tcp/services")
 
     async def get_udp_routers(self):
-        return await self._get("/udp/routers")
+        return await self._better_get("/udp/routers")
 
     async def get_udp_services(self):
-        return await self._get("/udp/services")
+        return await self._better_get("/udp/services")

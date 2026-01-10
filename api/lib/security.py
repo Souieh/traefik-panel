@@ -24,3 +24,8 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
         to_encode["jti"] = str(uuid.uuid4())
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
+
+def create_reset_code(data: dict, expires_delta: Union[timedelta, None] = None):
+    alphabet = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+    
