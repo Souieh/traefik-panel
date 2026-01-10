@@ -34,7 +34,7 @@ services:
     depends_on:
       - tpm-traefik
     volumes:
-      - ./data:/data
+      - ./data:/api/data
     ports:
       - "5000:8080"
     networks:
