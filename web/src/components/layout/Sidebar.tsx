@@ -1,4 +1,4 @@
-import logo from "@/assets/logo.png";
+import logo from "@/assets/tp-logo.svg";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/auth";
 import type { User } from "@/types/auth";

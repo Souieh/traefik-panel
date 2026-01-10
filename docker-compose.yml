@@ -10,6 +10,7 @@ services:
       - --ping=true
       - --ping.entrypoint=traefik
       - --entrypoints.traefik.address=:8080
+
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --providers.file.directory=/data/dynamic
@@ -17,8 +18,7 @@ services:
 
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443 
-
-    user: "1000:1000"
+ 
     ports:
       - "80:80"
       - "443:443" 
@@ -34,7 +34,7 @@ services:
   tpm-panel:
     build: .
     container_name: tpm-panel
-    user: "1000:1000"
+    user: "1000:1000" 
     
     restart: unless-stopped
     depends_on:

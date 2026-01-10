@@ -11,13 +11,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -36,55 +29,91 @@ import {
   Lock,
   Pencil,
   Plus,
-  PlusSquare,
   Scissors,
   Shield,
   Trash2,
   Wand2,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+// Define all middleware types from your API
 type MiddlewareType =
-  | "BasicAuth"
-  | "Headers"
-  | "RateLimit"
-  | "RedirectScheme"
-  | "StripPrefix"
-  | "AddPrefix"
-  | "Chain";
+  | "basicauth"
+  | "headers"
+  | "digestauth"
+  | "chain"
+  | "compress"
+  | "errorpage"
+  | "ipwhitelist"
+  | "ratelimit"
+  | "redirectregex"
+  | "redirectscheme"
+  | "replacepath"
+  | "replacepathregex"
+  | "stripprefix"
+  | "stripprefixregex"
+  | "retry"
+  | "requestheader";
 
 interface MiddlewareConfig {
-  type: MiddlewareType;
-  options: Record<string, any>;
+  [key: string]: Record<string, any>;
 }
 
 /* ===========================
    Type Icons Map
 =========================== */
 const typeIcons: Record<MiddlewareType, React.ReactNode> = {
-  BasicAuth: <Lock className="h-4 w-4" />,
-  Headers: <Shield className="h-4 w-4" />,
-  RateLimit: <AlertCircle className="h-4 w-4" />,
-  RedirectScheme: <ArrowRightLeft className="h-4 w-4" />,
-  StripPrefix: <Scissors className="h-4 w-4" />,
-  AddPrefix: <PlusSquare className="h-4 w-4" />,
-  Chain: <Eye className="h-4 w-4" />,
+  basicauth: <Lock className="h-4 w-4" />,
+  headers: <Shield className="h-4 w-4" />,
+  digestauth: <Lock className="h-4 w-4" />,
+  chain: <Eye className="h-4 w-4" />,
+  compress: <Scissors className="h-4 w-4" />,
+  errorpage: <AlertCircle className="h-4 w-4" />,
+  ipwhitelist: <Shield className="h-4 w-4" />,
+  ratelimit: <AlertCircle className="h-4 w-4" />,
+  redirectregex: <ArrowRightLeft className="h-4 w-4" />,
+  redirectscheme: <ArrowRightLeft className="h-4 w-4" />,
+  replacepath: <ArrowRightLeft className="h-4 w-4" />,
+  replacepathregex: <ArrowRightLeft className="h-4 w-4" />,
+  stripprefix: <Scissors className="h-4 w-4" />,
+  stripprefixregex: <Scissors className="h-4 w-4" />,
+  retry: <AlertCircle className="h-4 w-4" />,
+  requestheader: <Shield className="h-4 w-4" />,
+};
+
+const typeLabels: Record<MiddlewareType, string> = {
+  basicauth: "Basic Auth",
+  headers: "Headers",
+  digestauth: "Digest Auth",
+  chain: "Chain",
+  compress: "Compress",
+  errorpage: "Error Page",
+  ipwhitelist: "IP Whitelist",
+  ratelimit: "Rate Limit",
+  redirectregex: "Redirect Regex",
+  redirectscheme: "Redirect Scheme",
+  replacepath: "Replace Path",
+  replacepathregex: "Replace Path Regex",
+  stripprefix: "Strip Prefix",
+  stripprefixregex: "Strip Prefix Regex",
+  retry: "Retry",
+  requestheader: "Request Header",
 };
 
 /* ===========================
    Configuration Preview Component
 =========================== */
-function ConfigPreview({
-  config,
-  type,
-}: {
-  config: any;
-  type: MiddlewareType;
-}) {
-  const renderConfig = () => {
+function ConfigPreview({ config }: { config: MiddlewareConfig }) {
+  if (!config) {
+    return (
+      <span className="text-sm text-muted-foreground">No configuration</span>
+    );
+  }
+
+  const renderConfig = (type: MiddlewareType, options: any) => {
     switch (type) {
-      case "BasicAuth":
+      case "basicauth":
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -92,108 +121,130 @@ function ConfigPreview({
                 Users
               </Badge>
               <span className="text-sm">
-                {config.users?.length || 0} user(s)
+                {options.users?.length || 0} user(s)
               </span>
             </div>
-            {config.users?.map((user: string, i: number) => (
+            {options.users?.map((user: string, i: number) => (
               <code key={i} className="block text-xs text-muted-foreground">
                 {user.replace(/:.*/, ":*****")}
               </code>
             ))}
           </div>
         );
-      case "Headers":
+      case "headers":
         return (
           <div className="space-y-1">
-            {config.customRequestHeaders && (
+            {options.customRequestHeaders && (
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">
                   Request Headers
                 </Badge>
                 <span className="text-sm">
-                  {Object.keys(config.customRequestHeaders).length}
+                  {Object.keys(options.customRequestHeaders).length}
                 </span>
               </div>
             )}
-            {config.customResponseHeaders && (
+            {options.customResponseHeaders && (
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">
                   Response Headers
                 </Badge>
                 <span className="text-sm">
-                  {Object.keys(config.customResponseHeaders).length}
+                  {Object.keys(options.customResponseHeaders).length}
                 </span>
               </div>
             )}
           </div>
         );
-      case "RateLimit":
+      case "ratelimit":
         return (
           <div className="space-y-1">
             <div className="flex gap-2">
               <Badge variant="outline" className="text-xs">
-                Avg: {config.average || "0"}
+                Avg: {options.average || "0"}
               </Badge>
               <Badge variant="outline" className="text-xs">
-                Burst: {config.burst || "0"}
+                Burst: {options.burst || "0"}
               </Badge>
             </div>
           </div>
         );
-      case "RedirectScheme":
+      case "redirectscheme":
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
                 Scheme
               </Badge>
-              <span className="text-sm">{config.scheme || "https"}</span>
+              <span className="text-sm">{options.scheme || "https"}</span>
             </div>
-            {config.port && (
+            {options.port && (
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">
                   Port
                 </Badge>
-                <span className="text-sm">{config.port}</span>
+                <span className="text-sm">{options.port}</span>
               </div>
             )}
           </div>
         );
-      case "StripPrefix":
+      case "stripprefix":
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
                 Prefixes
               </Badge>
-              <span className="text-sm">{config.prefixes?.length || 0}</span>
+              <span className="text-sm">{options.prefixes?.length || 0}</span>
             </div>
-            {config.prefixes?.map((prefix: string, i: number) => (
+            {options.prefixes?.map((prefix: string, i: number) => (
               <code key={i} className="block text-xs text-muted-foreground">
                 {prefix}
               </code>
             ))}
           </div>
         );
-      case "AddPrefix":
+      case "requestheader":
         return (
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                Prefix
-              </Badge>
-              <span className="text-sm">{config.prefix}</span>
-            </div>
+            {options.headers && (
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  Headers
+                </Badge>
+                <span className="text-sm">
+                  {Object.keys(options.headers).length}
+                </span>
+              </div>
+            )}
           </div>
         );
       default:
         return (
-          <span className="text-sm text-muted-foreground">Custom config</span>
+          <span className="text-sm text-muted-foreground">
+            {Object.keys(options).length} configuration items
+          </span>
         );
     }
   };
-  return JSON.stringify(config, null, 2);
-  return <div className="text-sm">{renderConfig()}</div>;
+
+  return (
+    <div className="space-y-2">
+      {Object.entries(config).map(([type, options]) => (
+        <div key={type} className="space-y-1">
+          <div className="flex items-center gap-2">
+            {typeIcons[type as MiddlewareType] || (
+              <Shield className="h-3 w-3" />
+            )}
+            <span className="text-xs font-medium">
+              {typeLabels[type as MiddlewareType] || type}
+            </span>
+          </div>
+          {renderConfig(type as MiddlewareType, options)}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /* ===========================
@@ -201,12 +252,10 @@ function ConfigPreview({
 =========================== */
 function YAMLPreview({
   name,
-  type,
-  options,
+  config,
 }: {
   name: string;
-  type: MiddlewareType;
-  options: any;
+  config: MiddlewareConfig;
 }) {
   const formatValue = (value: any): string => {
     if (Array.isArray(value)) {
@@ -218,7 +267,7 @@ function YAMLPreview({
         .join("\n");
       return `\n${entries}`;
     }
-    if (typeof value === "number") {
+    if (typeof value === "number" || typeof value === "boolean") {
       return value.toString();
     }
     return `"${value}"`;
@@ -228,9 +277,13 @@ function YAMLPreview({
 http:
   middlewares:
     ${name}:
-      ${type.toLowerCase()}:
-${Object.entries(options)
-  .map(([key, value]) => `        ${key}: ${formatValue(value)}`)
+${Object.entries(config)
+  .map(
+    ([type, options]) =>
+      `      ${type}:\n${Object.entries(options)
+        .map(([key, value]) => `        ${key}: ${formatValue(value)}`)
+        .join("\n")}`
+  )
   .join("\n")}`;
 
   return (
@@ -259,368 +312,147 @@ ${Object.entries(options)
 }
 
 /* ===========================
-   Configuration Builder Component
+   Enhanced Multi-Type Configuration Builder
 =========================== */
-function ConfigBuilder({
-  type,
-  options,
-  setOptions,
+function EnhancedConfigBuilder({
+  enabledTypes,
+  rawConfigs,
+  setEnabledTypes,
+  setRawConfigs,
   simpleMode,
-  onTypeChange,
 }: {
-  type: MiddlewareType;
-  options: any;
-  setOptions: (options: any) => void;
+  enabledTypes: MiddlewareType[];
+  rawConfigs: Record<MiddlewareType, string>;
+  setEnabledTypes: (types: MiddlewareType[]) => void;
+  setRawConfigs: (configs: Record<MiddlewareType, string>) => void;
   simpleMode: boolean;
-  onTypeChange: (type: MiddlewareType) => void;
 }) {
-  const renderSimpleOptions = () => {
-    const commonClasses = "space-y-4 rounded-lg border p-4";
+  const exampleConfigs: Partial<Record<MiddlewareType, string>> = {
+    basicauth: JSON.stringify(
+      {
+        users: ["user1:$apr1$hashedpassword1", "user2:$apr1$hashedpassword2"],
+      },
+      null,
+      2
+    ),
+    headers: JSON.stringify(
+      {
+        customRequestHeaders: {
+          "X-Frame-Options": "DENY",
+          "X-Content-Type-Options": "nosniff",
+        },
+        customResponseHeaders: {
+          "X-Custom-Response": "value",
+        },
+      },
+      null,
+      2
+    ),
+    ratelimit: JSON.stringify(
+      {
+        average: 100,
+        burst: 50,
+        period: "1s",
+      },
+      null,
+      2
+    ),
+    redirectscheme: JSON.stringify(
+      {
+        scheme: "https",
+        permanent: true,
+      },
+      null,
+      2
+    ),
+    stripprefix: JSON.stringify(
+      {
+        prefixes: ["/api", "/v1"],
+      },
+      null,
+      2
+    ),
+    requestheader: JSON.stringify(
+      {
+        headers: {
+          "X-Custom-Header": "value",
+          Authorization: "Bearer token",
+        },
+      },
+      null,
+      2
+    ),
+    chain: JSON.stringify(
+      {
+        middlewares: ["auth", "rate-limit"],
+      },
+      null,
+      2
+    ),
+    ipwhitelist: JSON.stringify(
+      {
+        sourceRange: ["192.168.1.0/24", "10.0.0.0/8"],
+      },
+      null,
+      2
+    ),
+  };
 
-    switch (type) {
-      case "BasicAuth":
-        return (
-          <div className={commonClasses}>
-            <div className="space-y-2">
-              <Label htmlFor="users" className="flex items-center gap-2">
-                Users
-                <Badge variant="outline" className="text-xs">
-                  Required
-                </Badge>
-              </Label>
-              <Textarea
-                id="users"
-                value={options.users?.join("\n") || ""}
-                onChange={(e) =>
-                  setOptions({
-                    ...options,
-                    users: e.target.value.split("\n").filter(Boolean),
-                  })
-                }
-                placeholder="user1:$apr1$hashedpassword1&#10;user2:$apr1$hashedpassword2"
-                className="font-mono text-sm min-h-[100px]"
-              />
-              <div className="flex items-start gap-2 text-sm text-amber-600">
-                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span>
-                  Use htpasswd to generate hashed passwords:{" "}
-                  <code className="text-xs">htpasswd -nb user password</code>
-                </span>
-              </div>
-            </div>
-          </div>
-        );
-
-      case "Headers":
-        return (
-          <div className={commonClasses}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Request Headers</Label>
-                <Textarea
-                  value={
-                    options.customRequestHeaders
-                      ? Object.entries(options.customRequestHeaders)
-                          .map(([k, v]) => `${k}: ${v}`)
-                          .join("\n")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const headers: Record<string, string> = {};
-                    e.target.value
-                      .split("\n")
-                      .filter(Boolean)
-                      .forEach((line) => {
-                        const [key, ...value] = line.split(":");
-                        if (key && value.length > 0) {
-                          headers[key.trim()] = value.join(":").trim();
-                        }
-                      });
-                    setOptions({
-                      ...options,
-                      customRequestHeaders: Object.keys(headers).length
-                        ? headers
-                        : undefined,
-                    });
-                  }}
-                  placeholder="X-Frame-Options: DENY&#10;X-Content-Type-Options: nosniff"
-                  className="font-mono text-sm min-h-[100px]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Response Headers</Label>
-                <Textarea
-                  value={
-                    options.customResponseHeaders
-                      ? Object.entries(options.customResponseHeaders)
-                          .map(([k, v]) => `${k}: ${v}`)
-                          .join("\n")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const headers: Record<string, string> = {};
-                    e.target.value
-                      .split("\n")
-                      .filter(Boolean)
-                      .forEach((line) => {
-                        const [key, ...value] = line.split(":");
-                        if (key && value.length > 0) {
-                          headers[key.trim()] = value.join(":").trim();
-                        }
-                      });
-                    setOptions({
-                      ...options,
-                      customResponseHeaders: Object.keys(headers).length
-                        ? headers
-                        : undefined,
-                    });
-                  }}
-                  placeholder="X-Custom-Header: value"
-                  className="font-mono text-sm min-h-[100px]"
-                />
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Add one header per line in format: <code>Header-Name: value</code>
-            </div>
-          </div>
-        );
-
-      case "RateLimit":
-        return (
-          <div className={commonClasses}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="average">Average Requests</Label>
-                <Input
-                  id="average"
-                  type="number"
-                  min="1"
-                  value={options.average || ""}
-                  onChange={(e) =>
-                    setOptions({ ...options, average: Number(e.target.value) })
-                  }
-                  placeholder="100"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="burst">Burst Requests</Label>
-                <Input
-                  id="burst"
-                  type="number"
-                  min="1"
-                  value={options.burst || ""}
-                  onChange={(e) =>
-                    setOptions({ ...options, burst: Number(e.target.value) })
-                  }
-                  placeholder="50"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="period">Period (seconds)</Label>
-              <Select
-                value={options.period || "1s"}
-                onValueChange={(v) => setOptions({ ...options, period: v })}
-              >
-                <SelectTrigger id="period">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1s">1 second</SelectItem>
-                  <SelectItem value="10s">10 seconds</SelectItem>
-                  <SelectItem value="1m">1 minute</SelectItem>
-                  <SelectItem value="10m">10 minutes</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-
-      case "RedirectScheme":
-        return (
-          <div className={commonClasses}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="scheme">Scheme</Label>
-                <Select
-                  value={options.scheme || "https"}
-                  onValueChange={(v) => setOptions({ ...options, scheme: v })}
-                >
-                  <SelectTrigger id="scheme">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="https">HTTP → HTTPS</SelectItem>
-                    <SelectItem value="http">HTTPS → HTTP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="port">Port (optional)</Label>
-                <Input
-                  id="port"
-                  type="number"
-                  value={options.port || ""}
-                  onChange={(e) =>
-                    setOptions({
-                      ...options,
-                      port: e.target.value ? e.target.value : undefined,
-                    })
-                  }
-                  placeholder="443"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Checkbox
-                  checked={options.permanent || false}
-                  onCheckedChange={(v) =>
-                    setOptions({ ...options, permanent: !!v })
-                  }
-                />
-                Permanent Redirect (301)
-              </Label>
-            </div>
-          </div>
-        );
-
-      case "StripPrefix":
-        return (
-          <div className={commonClasses}>
-            <div className="space-y-2">
-              <Label htmlFor="prefixes">Prefixes to Strip</Label>
-              <Textarea
-                id="prefixes"
-                value={options.prefixes?.join("\n") || ""}
-                onChange={(e) =>
-                  setOptions({
-                    ...options,
-                    prefixes: e.target.value.split("\n").filter(Boolean),
-                  })
-                }
-                placeholder="/api/v1&#10;/admin"
-                className="font-mono text-sm min-h-[100px]"
-              />
-              <div className="text-sm text-muted-foreground">
-                Add one prefix per line. Example: <code>/api</code> will strip
-                /api from requests
-              </div>
-            </div>
-          </div>
-        );
-
-      case "AddPrefix":
-        return (
-          <div className={commonClasses}>
-            <div className="space-y-2">
-              <Label htmlFor="prefix">Prefix to Add</Label>
-              <Input
-                id="prefix"
-                value={options.prefix || ""}
-                onChange={(e) =>
-                  setOptions({ ...options, prefix: e.target.value })
-                }
-                placeholder="/api/v1"
-                className="font-mono"
-              />
-              <div className="text-sm text-muted-foreground">
-                Example: <code>/api</code> will add /api to all requests
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return (
-          <div className={commonClasses}>
-            <div className="text-center text-muted-foreground">
-              Use advanced mode for custom middleware configuration
-            </div>
-          </div>
-        );
+  const toggleType = (type: MiddlewareType) => {
+    if (enabledTypes.includes(type)) {
+      setEnabledTypes(enabledTypes.filter((t) => t !== type));
+      // Clear config when disabled
+      const newConfigs = { ...rawConfigs };
+      delete newConfigs[type];
+      setRawConfigs(newConfigs);
+    } else {
+      setEnabledTypes([...enabledTypes, type]);
+      // Initialize with example config if available
+      const newConfigs = { ...rawConfigs };
+      newConfigs[type] = exampleConfigs[type] || "{}";
+      setRawConfigs(newConfigs);
     }
   };
 
-  const exampleConfigs: Record<MiddlewareType, string> = {
-    BasicAuth: JSON.stringify(
-      {
-        basicAuth: {
-          users: ["user1:$apr1$hashedpassword1", "user2:$apr1$hashedpassword2"],
-        },
-      },
-      null,
-      2
-    ),
-    Headers: JSON.stringify(
-      {
-        headers: {
-          customRequestHeaders: {
-            "X-Custom-Request": "value",
-          },
-          customResponseHeaders: {
-            "X-Custom-Response": "value",
-          },
-        },
-      },
-      null,
-      2
-    ),
-    RateLimit: JSON.stringify(
-      {
-        rateLimit: {
-          average: 100,
-          burst: 50,
-          period: "1s",
-        },
-      },
-      null,
-      2
-    ),
-    RedirectScheme: JSON.stringify(
-      {
-        redirectScheme: {
-          scheme: "https",
-          permanent: true,
-        },
-      },
-      null,
-      2
-    ),
-    StripPrefix: JSON.stringify(
-      {
-        stripPrefix: {
-          prefixes: ["/api", "/v1"],
-        },
-      },
-      null,
-      2
-    ),
-    AddPrefix: JSON.stringify(
-      {
-        addPrefix: {
-          prefix: "/api",
-        },
-      },
-      null,
-      2
-    ),
-    Chain: JSON.stringify(
-      {
-        chain: {
-          middlewares: ["auth", "rate-limit"],
-        },
-      },
-      null,
-      2
-    ),
+  const handleConfigChange = (type: MiddlewareType, value: string) => {
+    setRawConfigs({
+      ...rawConfigs,
+      [type]: value,
+    });
   };
+
+  const loadExample = (type: MiddlewareType) => {
+    if (exampleConfigs[type]) {
+      setRawConfigs({
+        ...rawConfigs,
+        [type]: exampleConfigs[type]!,
+      });
+    }
+  };
+
+  const allMiddlewareTypes: MiddlewareType[] = [
+    "basicauth",
+    "headers",
+    "digestauth",
+    "chain",
+    "compress",
+    "errorpage",
+    "ipwhitelist",
+    "ratelimit",
+    "redirectregex",
+    "redirectscheme",
+    "replacepath",
+    "replacepathregex",
+    "stripprefix",
+    "stripprefixregex",
+    "retry",
+    "requestheader",
+  ];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-base font-semibold">Configuration</Label>
+        <Label className="text-base font-semibold">Middleware Types</Label>
         <Tabs
           value={simpleMode ? "simple" : "advanced"}
           onValueChange={() => {}}
@@ -640,7 +472,66 @@ function ConfigBuilder({
       </div>
 
       {simpleMode ? (
-        renderSimpleOptions()
+        <div className="space-y-4">
+          <div className="rounded-lg border p-4">
+            <Label className="mb-4 block">Select Middleware Types</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {allMiddlewareTypes.map((type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`type-${type}`}
+                    checked={enabledTypes.includes(type)}
+                    onCheckedChange={() => toggleType(type)}
+                  />
+                  <Label
+                    htmlFor={`type-${type}`}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    {typeIcons[type]}
+                    {typeLabels[type]}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {enabledTypes.length > 0 && (
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Configurations</Label>
+              {enabledTypes.map((type) => (
+                <div key={type} className="space-y-2 rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {typeIcons[type]}
+                      <span className="font-medium">{typeLabels[type]}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {type}
+                      </Badge>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadExample(type)}
+                    >
+                      Load Example
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={rawConfigs[type] || ""}
+                    onChange={(e) => handleConfigChange(type, e.target.value)}
+                    className="min-h-[150px] font-mono text-sm"
+                    placeholder={`Enter JSON configuration for ${type}`}
+                    spellCheck={false}
+                  />
+                  <div className="text-xs text-muted-foreground">
+                    Enter valid JSON configuration for {typeLabels[type]}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="rounded-lg border p-4">
@@ -653,7 +544,14 @@ function ConfigBuilder({
                   size="sm"
                   onClick={() => {
                     try {
-                      const config = { [type.toLowerCase()]: options };
+                      const config = enabledTypes.reduce((acc, type) => {
+                        try {
+                          acc[type] = JSON.parse(rawConfigs[type] || "{}");
+                        } catch {
+                          acc[type] = {};
+                        }
+                        return acc;
+                      }, {} as MiddlewareConfig);
                       navigator.clipboard.writeText(
                         JSON.stringify(config, null, 2)
                       );
@@ -668,55 +566,73 @@ function ConfigBuilder({
               </div>
               <Textarea
                 value={JSON.stringify(
-                  { [type.toLowerCase()]: options },
+                  enabledTypes.reduce((acc, type) => {
+                    try {
+                      acc[type] = JSON.parse(rawConfigs[type] || "{}");
+                    } catch {
+                      acc[type] = {};
+                    }
+                    return acc;
+                  }, {} as MiddlewareConfig),
                   null,
                   2
                 )}
                 onChange={(e) => {
                   try {
                     const parsed = JSON.parse(e.target.value);
-                    const newType = Object.keys(parsed)[0] as MiddlewareType;
-                    onTypeChange(
-                      (newType.charAt(0).toUpperCase() +
-                        newType.slice(1)) as MiddlewareType
-                    );
-                    setOptions(parsed[newType.toLowerCase()] || {});
+                    // Extract enabled types from parsed object
+                    const newTypes = Object.keys(parsed) as MiddlewareType[];
+                    setEnabledTypes(newTypes);
+                    const newConfigs: Record<MiddlewareType | any, string> = {};
+                    newTypes.forEach((type) => {
+                      newConfigs[type] = JSON.stringify(parsed[type], null, 2);
+                    });
+                    setRawConfigs(newConfigs);
                   } catch {
                     // Keep raw text if invalid JSON
                   }
                 }}
-                className="min-h-[200px] font-mono text-sm"
+                className="min-h-[300px] font-mono text-sm"
                 spellCheck={false}
+                placeholder='{
+  "basicauth": {
+    "users": ["user:hashedpassword"]
+  },
+  "headers": {
+    "customRequestHeaders": {
+      "X-Custom": "value"
+    }
+  }
+}'
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">Examples:</Label>
+            <Label className="text-sm">Common Examples:</Label>
             <div className="grid grid-cols-2 gap-2">
-              {Object.entries(exampleConfigs).map(([t, config]) => (
+              {Object.entries(exampleConfigs).map(([type, config]) => (
                 <Button
-                  key={t}
+                  key={type}
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    try {
-                      const parsed = JSON.parse(config);
-                      const newType = Object.keys(parsed)[0] as MiddlewareType;
-                      onTypeChange(
-                        (newType.charAt(0).toUpperCase() +
-                          newType.slice(1)) as MiddlewareType
-                      );
-                      setOptions(parsed[newType.toLowerCase()] || {});
-                    } catch {
-                      toast.error("Failed to load example");
+                    const middlewareType = type as MiddlewareType;
+                    if (!enabledTypes.includes(middlewareType)) {
+                      setEnabledTypes([...enabledTypes, middlewareType]);
                     }
+                    setRawConfigs({
+                      ...rawConfigs,
+                      [middlewareType]: config,
+                    });
                   }}
                   className="h-auto py-2 px-3 text-xs justify-start"
                 >
                   <div className="flex flex-col items-start">
-                    <span className="font-medium">{t}</span>
+                    <span className="font-medium">
+                      {typeLabels[type as MiddlewareType]}
+                    </span>
                     <span className="text-muted-foreground truncate w-full">
                       {config.split("\n")[1]}
                     </span>
@@ -744,8 +660,10 @@ export default function MiddlewaresPage() {
 
   const [name, setName] = useState("");
   const [simpleMode, setSimpleMode] = useState(true);
-  const [type, setType] = useState<MiddlewareType>("BasicAuth");
-  const [options, setOptions] = useState<any>({});
+  const [enabledTypes, setEnabledTypes] = useState<MiddlewareType[]>([]);
+  const [rawConfigs, setRawConfigs] = useState<
+    Record<MiddlewareType | any, string>
+  >({});
 
   const token = localStorage.getItem("access_token");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -774,28 +692,25 @@ export default function MiddlewaresPage() {
     setEditingName(null);
     setName("");
     setSimpleMode(true);
-    setType("BasicAuth");
-    setOptions({});
+    setEnabledTypes([]);
+    setRawConfigs({});
     setIsModalOpen(true);
   };
 
   const handleEdit = (name: string, data: MiddlewareConfig) => {
     setEditingName(name);
     setName(name);
+    setSimpleMode(false); // Always use advanced mode for editing existing configs
 
-    // Extract type and options from data
-    const extractedType = Object.keys(data)[0] as MiddlewareType;
-    if (extractedType) {
-      setSimpleMode(true);
-      setType(extractedType);
-      setOptions(
-        data[extractedType.toLowerCase() as keyof MiddlewareConfig] || {}
-      );
-    } else {
-      setSimpleMode(false);
-      setType("BasicAuth");
-      setOptions({});
-    }
+    // Extract types and configs from data
+    const types = Object.keys(data) as MiddlewareType[];
+    setEnabledTypes(types);
+
+    const configs: Record<MiddlewareType | any, string> = {};
+    types.forEach((type) => {
+      configs[type] = JSON.stringify(data[type], null, 2);
+    });
+    setRawConfigs(configs);
 
     setIsModalOpen(true);
   };
@@ -823,22 +738,32 @@ export default function MiddlewaresPage() {
       return;
     }
 
-    if (simpleMode && !type) {
-      toast.error("Middleware type is required");
+    if (enabledTypes.length === 0) {
+      toast.error("At least one middleware type must be enabled");
       return;
     }
 
-    const payload: Record<string, any> = {};
-    if (simpleMode) {
-      payload[type.toLowerCase()] = options;
-    } else {
+    // Build payload by parsing all configs
+    const payload: MiddlewareConfig = {};
+    let hasError = false;
+
+    enabledTypes.forEach((type) => {
       try {
-        // For advanced mode, we already have the structure
-        payload[type.toLowerCase()] = options;
-      } catch {
-        toast.error("Invalid configuration");
-        return;
+        const config = JSON.parse(rawConfigs[type] || "{}");
+        if (Object.keys(config).length > 0) {
+          payload[type] = config;
+        }
+      } catch (error) {
+        toast.error(`Invalid JSON configuration for ${typeLabels[type]}`);
+        hasError = true;
       }
+    });
+
+    if (hasError || Object.keys(payload).length === 0) {
+      toast.error(
+        "Valid configuration required for at least one middleware type"
+      );
+      return;
     }
 
     try {
@@ -851,12 +776,15 @@ export default function MiddlewaresPage() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
       toast.success("Middleware saved successfully");
       setIsModalOpen(false);
       fetchMiddlewares();
-    } catch {
-      toast.error("Failed to save middleware");
+    } catch (error: any) {
+      toast.error(`Failed to save middleware: ${error.message}`);
     }
   };
 
@@ -898,60 +826,53 @@ export default function MiddlewaresPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="type" className="mb-2 block">
-                  Middleware Type
+                <Label className="text-base font-semibold">
+                  Configuration Mode
                 </Label>
-                <Select
-                  value={type}
-                  onValueChange={(v) => {
-                    setType(v as MiddlewareType);
-                    setOptions({});
-                  }}
-                  disabled={!simpleMode}
-                >
-                  <SelectTrigger id="type">
-                    <div className="flex items-center gap-2">
-                      <SelectValue placeholder="Select type" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(typeIcons).map(([t, icon]) => (
-                      <SelectItem key={t} value={t}>
-                        <div className="flex items-center gap-2">
-                          {icon}
-                          {t}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="mt-2">
+                <div className="flex items-center gap-4">
                   <Label className="flex items-center gap-2">
                     <Checkbox
                       checked={simpleMode}
                       onCheckedChange={(v) => {
                         setSimpleMode(!!v);
                         if (!!v) {
-                          setOptions({});
+                          // Clear configs when switching to simple mode
+                          setEnabledTypes([]);
+                          setRawConfigs({});
                         }
                       }}
                     />
                     Use Simple Configuration Mode
                   </Label>
+                  <Badge variant="outline">
+                    {enabledTypes.length} type(s) selected
+                  </Badge>
                 </div>
               </div>
             </div>
           </div>
 
-          <ConfigBuilder
-            type={type}
-            options={options}
-            setOptions={setOptions}
+          <EnhancedConfigBuilder
+            enabledTypes={enabledTypes}
+            rawConfigs={rawConfigs}
+            setEnabledTypes={setEnabledTypes}
+            setRawConfigs={setRawConfigs}
             simpleMode={simpleMode}
-            onTypeChange={setType}
           />
 
-          {name && <YAMLPreview name={name} type={type} options={options} />}
+          {name && enabledTypes.length > 0 && (
+            <YAMLPreview
+              name={name}
+              config={enabledTypes.reduce((acc, type) => {
+                try {
+                  acc[type] = JSON.parse(rawConfigs[type] || "{}");
+                } catch {
+                  acc[type] = {};
+                }
+                return acc;
+              }, {} as MiddlewareConfig)}
+            />
+          )}
 
           <DialogFooter className="gap-2">
             <Button
@@ -972,7 +893,7 @@ export default function MiddlewaresPage() {
 
   return (
     <div className="space-y-6">
-      <div className=" flex justify-between  items-center flex-wrap gap-4">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Middlewares</h1>
           <p className="text-muted-foreground">
@@ -1014,34 +935,38 @@ export default function MiddlewaresPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>Types</TableHead>
                 <TableHead>Configuration</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Object.entries(middlewares).map(([name, data]) => {
-                const type =
-                  (Object.keys(data)[0] as MiddlewareType) || "Unknown";
-                const config =
-                  data[type.toLowerCase() as keyof MiddlewareConfig] || {};
-                const Icon = typeIcons[type] || <Shield className="h-4 w-4" />;
+                const types = Object.keys(data) as MiddlewareType[];
 
                 return (
                   <TableRow key={name} className="group">
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        {Icon as ReactNode}
+                        <Shield className="h-4 w-4" />
                         {name}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="font-mono">
-                        {type}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {types.map((type) => (
+                          <Badge
+                            key={type}
+                            variant="secondary"
+                            className="font-mono text-xs"
+                          >
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <ConfigPreview config={config} type={type} />
+                      <ConfigPreview config={data} />
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -6,11 +6,9 @@ FROM node:20-alpine AS vite-builder
 WORKDIR /app/web
 
 # Install dependencies
-COPY web/package*.json ./
-RUN npm install
-
-# Copy source code and build
 COPY web/ .
+RUN npm install -g pnpm
+RUN pnpm install --frozen-lockfile
 RUN npm run build
 
 # =============================
@@ -33,6 +31,8 @@ COPY --from=vite-builder /app/web/dist ./web
 # Copy .env file
 COPY .env .env
 
+# Seed initial data
+RUN python  -m scripts.seed
 
 
 # Expose the port FastAPI will run on
