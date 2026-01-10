@@ -36,9 +36,6 @@ COPY --from=vite-builder /app/web/dist ./web
 # Copy .env file
 COPY .env .env
 
-# Seed initial data
-RUN python  -m scripts.seed
-
 
 # Expose the port FastAPI will run on
 EXPOSE 8080
