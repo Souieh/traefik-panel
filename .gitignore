@@ -12,14 +12,11 @@ __pycache__/
 venv/
 
 # Local dev data
-api/data/**
+api/data/
 
 # Ignore everything under data
-data/**
-
-# But keep the dynamic config directory
-!data/
-!data/dynamic/
+data/
+ 
 
 # Keep ONLY the Traefik API router
 !data/dynamic/traefik-api.yaml

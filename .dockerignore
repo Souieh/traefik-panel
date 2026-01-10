@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+.vscode
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.sqlite3
+*.db
+venv/
+.env
+.git
+.gitignore
+tests/
