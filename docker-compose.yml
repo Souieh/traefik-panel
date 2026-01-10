@@ -10,7 +10,7 @@ services:
       - --entrypoints.traefik.address=:8080
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --providers.file.directory=/dynamic
+      - --providers.file.directory=/data/dynamic
       - --providers.file.watch=true
 
       - --entrypoints.web.address=:80
@@ -22,8 +22,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/certs:/certs
-      - ./data/dynamic:/dynamic:ro
-      - ./data:/data:ro
+      - ./data/dynamic:/data/dynamic:ro
 
     networks:
       - tpm-net
@@ -34,7 +33,7 @@ services:
     depends_on:
       - tpm-traefik
     volumes:
-      - ./data:/api/data
+      - ./data:/app/data
     ports:
       - "5000:8080"
     networks:
