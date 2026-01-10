@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import api from "@/lib/api";
 import {
   AlertCircle,
   ArrowRightLeft,
@@ -665,17 +666,11 @@ export default function MiddlewaresPage() {
     Record<MiddlewareType | any, string>
   >({});
 
-  const token = localStorage.getItem("access_token");
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
   const fetchMiddlewares = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_URL}/traefik/middlewares`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error("Failed to fetch middlewares");
-      const data = await response.json();
+      const response = await api.get(`/traefik/middlewares`);
+      const data = await response.data;
       setMiddlewares(data);
     } catch {
       toast.error("Error fetching middlewares");
@@ -718,11 +713,7 @@ export default function MiddlewaresPage() {
   const handleDelete = async (name: string) => {
     if (!confirm(`Delete middleware "${name}"?`)) return;
     try {
-      const res = await fetch(`${API_URL}/traefik/middlewares/${name}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error();
+      await api.delete(`/traefik/middlewares/${name}`);
       toast.success("Middleware deleted");
       fetchMiddlewares();
     } catch {
@@ -767,19 +758,8 @@ export default function MiddlewaresPage() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/traefik/middlewares/${name}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      await api.post(`/traefik/middlewares/${name}`, payload);
 
-      if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error);
-      }
       toast.success("Middleware saved successfully");
       setIsModalOpen(false);
       fetchMiddlewares();
