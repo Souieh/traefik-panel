@@ -1,6 +1,7 @@
 # Traefik Panel (TP)
 
-![Auth](media/auth.png "Login page - TP")
+![Auth](screenshots/auth.png "Login page - TP")
+![Dashboard](screenshots/dashboard.png "dashboard page - TP")
 
 **Traefik Panel (TP)** is a comprehensive dashboard and management tool for Traefik. It combines a modern web interface with a powerful backend to simplify the management of Traefik configurations, routes, and services.
 
