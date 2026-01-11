@@ -431,6 +431,7 @@ http:
 export default function RoutersPage() {
   const [routers, setRouters] = useState<Record<string, Router>>({});
   const [services, setServices] = useState<string[]>([]);
+  const [certResolvers, setCertResolvers] = useState<string[]>([]);
   const [internalServices, setInternalServices] = useState<string[]>([]);
   const [middlewaresList, setMiddlewaresList] = useState<string[]>([]);
   const [protocol, setProtocol] = useState<"http" | "tcp" | "udp">("http");
@@ -477,18 +478,21 @@ export default function RoutersPage() {
           ? "/traefik/services"
           : `/traefik/${protocol}/services`;
 
-      const [r, s, m, is] = await Promise.all([
+      const [r, s, m, is, cr] = await Promise.all([
         api.get(routerEndpoint),
         api.get(serviceEndpoint),
         protocol === "http"
           ? api.get("/traefik/middlewares")
           : Promise.resolve({ data: {} }),
         api.get("/traefik/status/services"),
+        api.get("/traefik/certificates-resolvers"),
       ]);
       setRouters(r.data);
       setServices(Object.keys(s.data));
       setInternalServices(is.data?.map((s: any) => s.name));
       setMiddlewaresList(Object.keys(m.data));
+
+      setCertResolvers(Object.keys(cr.data));
     } catch {
       toast.error("Failed to load Traefik configuration");
     } finally {
@@ -842,11 +846,21 @@ export default function RoutersPage() {
                     Enable TLS {protocol === "tcp" && "(Passthrough)"}
                   </Label>
                   {tlsEnabled && protocol === "http" && (
-                    <Input
+                    <Select
                       value={certResolver}
-                      onChange={(e) => setCertResolver(e.target.value)}
-                      placeholder="letsencrypt"
-                    />
+                      onValueChange={setCertResolver}
+                    >
+                      <SelectTrigger id="service">
+                        <SelectValue placeholder="Select a certResolver..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...certResolvers].map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </div>
               </div>
@@ -884,13 +898,13 @@ export default function RoutersPage() {
             Define rules to route incoming HTTP requests to services
           </p>
         </div>
-        <div className="flex  items-center gap-4 flex-wrap">
+        <div className="flex   items-center gap-4 flex-wrap">
           <Tabs
             className="flex-1"
             value={protocol}
             onValueChange={(v) => setProtocol(v as any)}
           >
-            <TabsList className="flex justify-stretch">
+            <TabsList className="flex justify-stretch ">
               <TabsTrigger className="flex-1" value="http">
                 HTTP
               </TabsTrigger>

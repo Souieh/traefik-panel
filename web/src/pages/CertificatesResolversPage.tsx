@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,18 +18,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import api from "@/lib/api";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Cpu, Globe, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+type ChallengeType = "httpChallenge" | "tlsChallenge" | "dnsChallenge";
+
 interface Resolver {
   acme?: {
-    email: string;
-    storage: string;
-    httpChallenge?: {
-      entryPoint: string;
-    };
+    email?: string;
+    storage?: string;
+    httpChallenge?: { entryPoint: string };
+    tlsChallenge?: {};
+    dnsChallenge?: { provider: string; delayBeforeCheck?: number };
   };
 }
 
@@ -40,15 +44,19 @@ export default function CertificatesResolversPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [storage, setStorage] = useState("acme.json");
+  const [challengeType, setChallengeType] =
+    useState<ChallengeType>("httpChallenge");
   const [entryPoint, setEntryPoint] = useState("web");
+  const [dnsProvider, setDnsProvider] = useState("");
+  const [dnsDelay, setDnsDelay] = useState(0);
 
+  // Fetch resolvers from backend
   const fetchResolvers = async () => {
     try {
       const response = await api.get("/traefik/certificates-resolvers");
-      setResolvers(response.data);
-    } catch (error) {
-      toast.error("Error fetching certificate resolvers");
+      setResolvers(response.data || {});
+    } catch {
+      toast.error("Error fetching resolvers");
     } finally {
       setIsLoading(false);
     }
@@ -58,62 +66,72 @@ export default function CertificatesResolversPage() {
     fetchResolvers();
   }, []);
 
+  // Open modal for add
   const openAddModal = () => {
     setEditingName(null);
     setName("");
     setEmail("");
-    setStorage("acme.json");
+    setChallengeType("httpChallenge");
     setEntryPoint("web");
+    setDnsProvider("");
+    setDnsDelay(0);
     setIsModalOpen(true);
   };
 
+  // Open modal for edit
   const handleEdit = (resolverName: string, config: Resolver) => {
     setEditingName(resolverName);
     setName(resolverName);
-    if (config.acme) {
-      setEmail(config.acme.email || "");
-      setStorage(config.acme.storage || "acme.json");
-      setEntryPoint(config.acme.httpChallenge?.entryPoint || "web");
+    const acme = config.acme;
+    if (!acme) return;
+
+    setEmail(acme.email || "");
+    if (acme.httpChallenge) {
+      setChallengeType("httpChallenge");
+      setEntryPoint(acme.httpChallenge.entryPoint || "web");
+    } else if (acme.tlsChallenge) {
+      setChallengeType("tlsChallenge");
+    } else if (acme.dnsChallenge) {
+      setChallengeType("dnsChallenge");
+      setDnsProvider(acme.dnsChallenge.provider || "");
+      setDnsDelay(acme.dnsChallenge.delayBeforeCheck || 0);
     }
     setIsModalOpen(true);
   };
 
   const handleDelete = async (resolverName: string) => {
-    if (!confirm(`Are you sure you want to delete resolver ${resolverName}?`))
-      return;
+    if (!confirm(`Delete resolver ${resolverName}?`)) return;
     try {
       await api.delete(`/traefik/certificates-resolvers/${resolverName}`);
-      toast.success("Resolver deleted");
+      toast.success("Deleted");
       fetchResolvers();
-    } catch (error) {
+    } catch {
       toast.error("Error deleting resolver");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const payload = {
-        acme: {
-          email,
-          storage,
-          httpChallenge: {
-            entryPoint,
-          },
-        },
-      };
 
-      await api.post(`/traefik/certificates-resolvers/${name}`, payload);
-      toast.success("Resolver saved");
+    const acme: any = { email };
+    if (challengeType === "httpChallenge") acme.httpChallenge = { entryPoint };
+    if (challengeType === "tlsChallenge") acme.tlsChallenge = {};
+    if (challengeType === "dnsChallenge")
+      acme.dnsChallenge = { provider: dnsProvider, delayBeforeCheck: dnsDelay };
+
+    try {
+      await api.post(`/traefik/certificates-resolvers/${name}`, { acme });
+      toast.success("Saved");
       setIsModalOpen(false);
       fetchResolvers();
-    } catch (error) {
+    } catch {
       toast.error("Error saving resolver");
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">Certificate Resolvers</h1>
@@ -124,114 +142,61 @@ export default function CertificatesResolversPage() {
         <Button onClick={openAddModal}>
           <Plus className="mr-2 h-4 w-4" /> Add Resolver
         </Button>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingName ? "Edit Resolver" : "Add New Resolver"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingName
-                  ? "Update existing certificate resolver configuration."
-                  : "Create a new certificate resolver."}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  disabled={!!editingName}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="user@example.com"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="storage">Storage</Label>
-                <Input
-                  id="storage"
-                  value={storage}
-                  onChange={(e) => setStorage(e.target.value)}
-                  required
-                  placeholder="acme.json"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="entryPoint">HTTP Challenge EntryPoint</Label>
-                <Input
-                  id="entryPoint"
-                  value={entryPoint}
-                  onChange={(e) => setEntryPoint(e.target.value)}
-                  required
-                  placeholder="web"
-                />
-              </div>
-              <DialogFooter>
-                <Button type="submit">Save Resolver</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
+      {/* Resolvers table */}
       <div className="rounded-md border bg-white">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Storage</TableHead>
               <TableHead>Challenge</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(resolvers).map(([resolverName, config]) => (
-              <TableRow key={resolverName}>
-                <TableCell className="font-medium">{resolverName}</TableCell>
-                <TableCell>{config.acme?.email}</TableCell>
-                <TableCell>{config.acme?.storage}</TableCell>
-                <TableCell>
-                  {config.acme?.httpChallenge
-                    ? `HTTP (${config.acme.httpChallenge.entryPoint})`
-                    : "-"}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(resolverName, config)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDelete(resolverName)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {Object.entries(resolvers).map(([resolverName, config]) => {
+              const acme = config.acme;
+              let challengeLabel = "-";
+              if (acme?.httpChallenge)
+                challengeLabel = `HTTP (${acme.httpChallenge.entryPoint})`;
+              else if (acme?.tlsChallenge) challengeLabel = "TLS";
+              else if (acme?.dnsChallenge)
+                challengeLabel = `DNS (${acme.dnsChallenge.provider}, delay: ${
+                  acme.dnsChallenge.delayBeforeCheck ?? 0
+                })`;
+
+              return (
+                <TableRow key={resolverName}>
+                  <TableCell className="font-medium">{resolverName}</TableCell>
+                  <TableCell>{acme?.email}</TableCell>
+                  <TableCell>{challengeLabel}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(resolverName, config)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => handleDelete(resolverName)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {Object.keys(resolvers).length === 0 && !isLoading && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={4}
                   className="text-center text-muted-foreground"
                 >
                   No resolvers found
@@ -241,6 +206,168 @@ export default function CertificatesResolversPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Add/Edit Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingName ? "Edit Resolver" : "Add New Resolver"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingName
+                ? "Update existing resolver."
+                : "Create a new certificate resolver."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+            {/* Name */}
+            <div className="grid gap-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={!!editingName}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="user@example.com"
+              />
+            </div>
+
+            {/* Challenge type */}
+            <div className="grid gap-2">
+              <Label>Challenge Type</Label>
+              <div className="flex  items-center gap-4 flex-wrap">
+                <Tabs
+                  className="flex-1 "
+                  value={challengeType}
+                  onValueChange={(v) => setChallengeType(v as any)}
+                >
+                  <TabsList className="flex justify-stretch ">
+                    {[
+                      {
+                        type: "httpChallenge",
+                        title: "HTTP",
+                        description: "ACME HTTP challenge via HTTP-01",
+                        icon: Cpu,
+                      },
+                      {
+                        type: "tlsChallenge",
+                        title: "TLS",
+                        description: "ACME TLS challenge via TLS-ALPN-01",
+                        icon: Lock,
+                      },
+                      {
+                        type: "dnsChallenge",
+                        title: "DNS",
+                        description:
+                          "ACME DNS challenge (requires DNS provider)",
+                        icon: Globe,
+                      },
+                    ].map((c) => (
+                      <TabsTrigger
+                        className="flex-1"
+                        value={c.type}
+                        key={c.type}
+                      >
+                        {c.title}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+            </div>
+
+            {/* Dynamic fields */}
+            {challengeType === "httpChallenge" && (
+              <div className="grid gap-2">
+                <Label htmlFor="entryPoint">HTTP Challenge EntryPoint</Label>
+                <Input
+                  id="entryPoint"
+                  value={entryPoint}
+                  onChange={(e) => setEntryPoint(e.target.value)}
+                  required
+                  placeholder="web"
+                />
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {["web", "websecure", "traefik"].map((entryPoint) => (
+                    <Badge
+                      variant={"secondary"}
+                      className="cursor-pointer "
+                      key={entryPoint}
+                      onClick={() => setEntryPoint(entryPoint)}
+                    >
+                      {entryPoint}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {challengeType === "dnsChallenge" && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="dnsProvider">DNS Provider</Label>
+                  <Input
+                    id="dnsProvider"
+                    value={dnsProvider}
+                    onChange={(e) => setDnsProvider(e.target.value)}
+                    required
+                    placeholder="cloudflare"
+                  />
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {[
+                      "cloudflare",
+                      "route53",
+                      "digitalocean",
+                      "gandi",
+                      "googlecloud",
+                    ].map((provider) => (
+                      <Badge
+                        variant={"secondary"}
+                        className="cursor-pointer "
+                        key={provider}
+                        onClick={() => setDnsProvider(provider)}
+                      >
+                        {provider}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="dnsDelay">Delay Before Check (seconds)</Label>
+                  <Input
+                    id="dnsDelay"
+                    type="number"
+                    value={dnsDelay}
+                    onChange={(e) => setDnsDelay(Number(e.target.value))}
+                    placeholder="0"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* TLS has no fields */}
+
+            <DialogFooter>
+              <Button type="submit">Save Resolver</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
