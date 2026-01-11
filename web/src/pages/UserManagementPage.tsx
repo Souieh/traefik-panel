@@ -32,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import api from "@/lib/api";
 import { authService } from "@/services/auth";
 import type { User } from "@/types/auth";
@@ -277,170 +276,144 @@ export default function UserManagementPage() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="basic">Basic Information</TabsTrigger>
-              <TabsTrigger value="permissions">Role & Permissions</TabsTrigger>
-            </TabsList>
+          <div className="grid grid-cols-2 gap-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="username" className="flex items-center gap-2">
+                <UserIcon className="h-4 w-4" />
+                Username
+                <Badge variant="outline" className="text-xs">
+                  Required
+                </Badge>
+              </Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={!!editingUser}
+                placeholder="johndoe"
+                className="font-mono"
+              />
+            </div>
 
-            <TabsContent value="basic" className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="flex items-center gap-2">
-                    <UserIcon className="h-4 w-4" />
-                    Username
-                    <Badge variant="outline" className="text-xs">
-                      Required
-                    </Badge>
-                  </Label>
-                  <Input
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    disabled={!!editingUser}
-                    placeholder="johndoe"
-                    className="font-mono"
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email Address
+                <Badge variant="outline" className="text-xs">
+                  Required
+                </Badge>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="john@example.com"
+              />
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email Address
-                    <Badge variant="outline" className="text-xs">
-                      Required
-                    </Badge>
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="john@example.com"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2">
-                  <Key className="h-4 w-4" />
-                  Password
-                  {editingUser && (
-                    <Badge variant="outline" className="text-xs">
-                      Optional
-                    </Badge>
-                  )}
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required={!editingUser}
-                    placeholder={
-                      editingUser
-                        ? "Leave blank to keep current"
-                        : "Enter password"
-                    }
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {editingUser
-                    ? "Leave blank to keep current password"
-                    : "Minimum 8 characters with letters and numbers"}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Switch
-                    checked={isDisabled}
-                    onCheckedChange={setisDisabled}
-                  />
-                  Active Account
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {isDisabled
-                    ? "User can log in and access the system"
-                    : "User account is disabled and cannot log in"}
-                </p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="permissions" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  User Role
-                </Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger>
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      <SelectValue placeholder="Select role" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="operator">
-                      <div className="flex flex-col">
-                        <span className="font-medium">Operator</span>
-                        <span className="text-xs text-muted-foreground">
-                          Manage configurations
-                        </span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="admin">
-                      <div className="flex flex-col">
-                        <span className="font-medium">Admin</span>
-                        <span className="text-xs text-muted-foreground">
-                          Full system access
-                        </span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedRoleInfo && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">
-                      {selectedRoleInfo.name} Permissions
-                    </CardTitle>
-                    <CardDescription>
-                      {selectedRoleInfo.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {selectedRoleInfo.permissions.map((permission, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-sm">{permission}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              Password
+              {editingUser && (
+                <Badge variant="outline" className="text-xs">
+                  Optional
+                </Badge>
               )}
-            </TabsContent>
-          </Tabs>
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required={!editingUser}
+                placeholder={
+                  editingUser ? "Leave blank to keep current" : "Enter password"
+                }
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {editingUser
+                ? "Leave blank to keep current password"
+                : "Minimum 8 characters with letters and numbers"}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Switch checked={isDisabled} onCheckedChange={setisDisabled} />
+              Active Account
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              {isDisabled
+                ? "User can log in and access the system"
+                : "User account is disabled and cannot log in"}
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              User Role
+            </Label>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger>
+                <div className="flex items-center  py-1 gap-1 ">
+                  <Shield className="h-4 w-4" />
+                  <SelectValue placeholder="Select role" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="operator">
+                  {" "}
+                  <span className="font-medium">Operator</span>
+                </SelectItem>
+                <SelectItem value="admin">
+                  <span className="font-medium">Admin</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedRoleInfo && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  {selectedRoleInfo.name} Permissions
+                </CardTitle>
+                <CardDescription>
+                  {selectedRoleInfo.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {selectedRoleInfo.permissions.map((permission, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">{permission}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <DialogFooter className="gap-2">
             <Button
@@ -458,6 +431,12 @@ export default function UserManagementPage() {
       </DialogContent>
     );
   };
+
+  // Calculate stats
+  const totalUsers = users.length;
+  const activeUsers = users.filter((u) => !u.isDisabled).length;
+  const adminCount = users.filter((u) => u.role === "admin").length;
+  const operatorCount = users.filter((u) => u.role === "operator").length;
 
   return (
     <div className="space-y-6">
@@ -477,7 +456,74 @@ export default function UserManagementPage() {
         )}
       </div>
 
-      <Card className=" overflow-x-auto">
+      {/* Stats Cards - Top of the page */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Users
+                </p>
+                <h3 className="text-2xl font-bold mt-1">{totalUsers}</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Users
+                </p>
+                <h3 className="text-2xl font-bold mt-1">{activeUsers}</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Admins
+                </p>
+                <h3 className="text-2xl font-bold mt-1">{adminCount}</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <Shield className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Operators
+                </p>
+                <h3 className="text-2xl font-bold mt-1">{operatorCount}</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <UserIcon className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="overflow-x-auto">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex flex-wrap gap-2">
@@ -486,7 +532,7 @@ export default function UserManagementPage() {
                 {users.length} user{users.length !== 1 ? "s" : ""} in the system
               </CardDescription>
             </div>
-            <div className="flex items-center gap-3 flex-wrap ">
+            <div className="flex items-center gap-3 flex-wrap">
               <div className="relative min-w-46 flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -671,76 +717,6 @@ export default function UserManagementPage() {
           )}
         </CardContent>
       </Card>
-
-      {isAdmin && (
-        <div className="grid md:grid-cols-2  gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                User Statistics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Total Users
-                  </span>
-                  <span className="font-semibold">{users.length}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Active Users
-                  </span>
-                  <span className="font-semibold">
-                    {users.filter((u) => !u.isDisabled).length}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Admins</span>
-                  <span className="font-semibold">
-                    {users.filter((u) => u.role === "admin").length}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Operators
-                  </span>
-                  <span className="font-semibold">
-                    {users.filter((u) => u.role === "operator").length}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                Role Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {Object.values(rolePermissions).map((roleInfo) => (
-                  <div key={roleInfo.id} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{roleInfo.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {users.filter((u) => u.role === roleInfo.id).length}{" "}
-                        users
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {roleInfo.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

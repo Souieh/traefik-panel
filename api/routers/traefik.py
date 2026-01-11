@@ -1,6 +1,6 @@
 from typing import Annotated, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from core.models import User, TraefikRouter, TraefikService , TraefikMiddleware
+from core.models import User, TraefikRouter, TraefikService , TraefikMiddleware, TraefikCertResolver
 from lib.dependencies import get_current_active_user
 from lib.traefik.certificate_resolver_manager import CertificatesResolversManager
 from lib.traefik.http_manager import HttpManager
@@ -72,8 +72,8 @@ async def get_certificate_resolvers():
     return certificates_manager.get_certificate_resolvers()
 
 @router.post("/certificates-resolvers/{name}")
-async def update_certificate_resolver(name: str, resolver_data: Dict[str, Any]):
-    certificates_manager.update_certificate_resolver(name, resolver_data)
+async def update_certificate_resolver(name: str, resolver_data: TraefikCertResolver):
+    certificates_manager.update_certificate_resolver(name, resolver_data.model_dump(exclude_none=True))
     return {"msg": "Certificate Resolver updated"}
 
 @router.delete("/certificates-resolvers/{name}")

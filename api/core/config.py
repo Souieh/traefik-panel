@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     
     traefik_api_config_file: str = "data/dynamic/traefik_api.yaml"
     traefik_config_file: str = "data/dynamic/traefik_dynamic.yaml"
-    traefik_config_resolver_file: str = "./data/static/resolver.yml"
+    traefik_config_static: str = "data/static"
     traefik_api_url: str  
 
     tpm_panel_url:str 

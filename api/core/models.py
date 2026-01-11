@@ -1,5 +1,5 @@
 from typing import Union 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict , EmailStr
 from enum import Enum
 from typing import List, Optional, Dict, Any
 
@@ -93,3 +93,21 @@ class TraefikMiddleware(BaseModel):
 
     class Config:
         extra = "allow"  # still allows unknown or future middleware types
+
+
+
+class TraefikACMEConfig(BaseModel):
+    email: Optional[EmailStr] = None
+    # storage is controlled by backend, not frontend
+    httpChallenge: Optional[Dict[str, Any]] = None
+    tlsChallenge: Optional[Dict[str, Any]] = None
+    dnsChallenge: Optional[Dict[str, Any]] = None
+
+    class Config:
+        extra = "allow"  # allows extra challenge types if added in future
+
+class TraefikCertResolver(BaseModel):
+    acme: Optional[TraefikACMEConfig] = None
+
+    class Config:
+        extra = "allow"  # allow unknown top-level fields (future resolvers)
