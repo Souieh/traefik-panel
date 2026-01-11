@@ -30,6 +30,7 @@ api.interceptors.response.use(
       // The logout service will attempt to call the logout endpoint,
       // clear the local token, and redirect to the login page for the user to authenticate again.
       await authService.logout();
+      window.location.replace("/login");
     }
     return Promise.reject(error);
   }
