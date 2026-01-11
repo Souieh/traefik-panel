@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import api from "@/lib/api";
-import { Cpu, Globe, Pencil, Plus, Trash2 } from "lucide-react";
+import { Cpu, Globe, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
