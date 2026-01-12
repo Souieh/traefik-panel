@@ -22,7 +22,7 @@ async def read_users(
     users = get_users(db, skip=skip, limit=limit)
     return users
 
-@router.post("/users/", response_model=User, dependencies=[Depends(is_admin)])
+@router.post("/users", response_model=User, dependencies=[Depends(is_admin)])
 async def create_new_user(
     user: UserCreate,
     db: Session = Depends(get_db)
