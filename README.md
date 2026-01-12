@@ -1,7 +1,6 @@
 # Traefik Panel (TP)
 
-![Auth](screenshots/auth.png "Login page - TP")
-![Dashboard](screenshots/dashboard.png "dashboard page - TP")
+### Overview: [**Traefik Panil Main Page**](https://souieh.github.io/traefik-panel/ "Traefik Panil")
 
 **Traefik Panel (TP)** is a comprehensive dashboard and management tool for Traefik. It combines a modern web interface with a powerful backend to simplify the management of Traefik configurations, routes, and services.
 
@@ -18,6 +17,7 @@ The project consists of two main components bundled into a single container:
 
 1. **Frontend**: A Vite-based web application (located in `/web`).
 2. **Backend**: A FastAPI Python application (located in `/api`) that serves the API and the static frontend files.
+3. **Shared data folder**: A specific path that make the contact between the panel and traefik possible
 
 ## 📦 Getting Started
 
@@ -33,7 +33,12 @@ The project consists of two main components bundled into a single container:
 1. Setup envirments :
 
 ```bash
-        cp .env.example .env
+   	# Clone the repo
+	git clone git@github.com:Souieh/traefik-panel.git
+	# Create Data folder :
+	mkdir -p ./data/traefik/dynamic ./data/traefik/certs ./data/traefik/acme
+	# Copy .env
+	cp .env.example .env
 ```
 
 2. Build and run
@@ -42,7 +47,7 @@ The project consists of two main components bundled into a single container:
      docker compose up -d
 ```
 
-3. The dashboard will be available at `http://localhost:5000`.
+3. The dashboard will be available at `https://vps-ip:5000`.
 
 ## 🔧 Development
 
