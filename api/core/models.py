@@ -1,5 +1,5 @@
 from typing import Union 
-from pydantic import BaseModel, ConfigDict , EmailStr
+from pydantic import BaseModel, ConfigDict , EmailStr, Field
 from enum import Enum
 from typing import List, Optional, Dict, Any
 
@@ -111,3 +111,9 @@ class TraefikCertResolver(BaseModel):
 
     class Config:
         extra = "allow"  # allow unknown top-level fields (future resolvers)
+ 
+
+class ManualCertificateCreate(BaseModel):
+    certificate_pem: str = Field(..., description="Full PEM certificate chain")
+    private_key_pem: str = Field(..., description="PEM private key")
+    domains: Optional[List[str]] = None  # optional metadata

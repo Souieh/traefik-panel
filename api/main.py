@@ -33,7 +33,7 @@ except Exception as e:
 app = FastAPI(title="TPM Panel")
 
 # CORS
-origins = [settings.tpm_panel_url]  # only allow panel frontend domain
+origins = [settings.tp_panel_url]  # only allow panel frontend domain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

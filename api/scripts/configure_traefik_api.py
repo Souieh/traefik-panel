@@ -14,7 +14,7 @@ http:
 """
 
 def ensure_traefik_api_config():
-    TRA_API_FILE = Path(settings.traefik_api_config_file)
+    TRA_API_FILE = Path(settings.traefik_config_path, "dynamic/traefik-api.yaml")
     if not TRA_API_FILE.exists():
         print("Creating Traefik API dynamic router config...")
         os.makedirs(TRA_API_FILE.parent, exist_ok=True)
