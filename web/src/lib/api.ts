@@ -7,7 +7,7 @@ const api = axios.create({
   timeout: 7000,
 });
 
-// 1. Inject Token into every request
+// Inject Token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) {
@@ -16,22 +16,33 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 2. Handle Session Expiry (401)
+// Handle Response Errors
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // When a request fails with 401, it means the token is likely expired or invalid.
-    // We trigger a logout, which will clear credentials and redirect to the login page.
-    if (
-      error.response?.status === 401 &&
-      error.config.url !== "/logout" &&
-      window.location.pathname !== "/login"
-    ) {
-      // The logout service will attempt to call the logout endpoint,
-      // clear the local token, and redirect to the login page for the user to authenticate again.
+    const { config, response } = error;
+
+    // Ignore health-check errors
+    if (config?.url?.includes("/healthz")) {
+      return Promise.reject(error);
+    }
+
+    // Handle 401 -> logout
+    if (response?.status === 401 && config.url !== "/logout") {
       await authService.logout();
       window.location.replace("/login");
+      return Promise.reject(error);
     }
+
+    // For other network errors / timeouts / 5xx -> redirect to ErrorPage
+    if (!response || response.status >= 500 || error.code === "ECONNABORTED") {
+      // Use router redirect
+      window.location.replace(
+        "/error/500?message=Could not connect to server."
+      );
+      return Promise.reject(error);
+    }
+
     return Promise.reject(error);
   }
 );

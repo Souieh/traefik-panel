@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import CertificatesResolversPage from "./pages/CertificatesResolversPage";
 import DashboardPage from "./pages/DashboardPage";
+import ErrorPage from "./pages/ErrorPage";
 import LoginPage from "./pages/LoginPage";
 import MiddlewaresPage from "./pages/MiddlewaresPage";
 import PasswordRecoveryPage from "./pages/PasswordRecoveryPage";
@@ -47,6 +48,9 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/error/:status" element={<ErrorPage />} />
+
+        <Route path="*" element={<Navigate to="/error/404" replace />} />
       </Routes>
       <Toaster />
     </>
