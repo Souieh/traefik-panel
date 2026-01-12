@@ -1,12 +1,16 @@
 import os
 import yaml
+from pathlib import Path
 from core.config import settings
 
 class HttpManager:
     def __init__(self):
-        self.config_file = settings.traefik_config_file 
-        if not os.path.exists(self.config_file):
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+        self.config_file = Path(settings.traefik_config_path, "dynamic/traefik-http-configs.yaml") 
+       
+        if not self.config_file.exists():
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.config_file, "w") as f:
+                f.write("\n")
 
     def _read_config(self):
         if not os.path.exists(self.config_file):

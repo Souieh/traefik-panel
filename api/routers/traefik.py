@@ -1,11 +1,12 @@
 from typing import Annotated, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from core.models import User, TraefikRouter, TraefikService , TraefikMiddleware, TraefikCertResolver
+from core.models import User, TraefikRouter, TraefikService , TraefikMiddleware, TraefikCertResolver, ManualCertificateCreate
 from lib.dependencies import get_current_active_user
 from lib.traefik.certificate_resolver_manager import CertificatesResolversManager
 from lib.traefik.http_manager import HttpManager
 from lib.traefik.tcp_udp_manager import TcpUdpManager
 from lib.traefik.traefik_api import TraefikApiService
+from lib.traefik.manual_certificates_manager import ManualCertificatesManager
 
 router = APIRouter(
     prefix="/traefik",
@@ -13,11 +14,14 @@ router = APIRouter(
     dependencies=[Depends(get_current_active_user)],
 )
 
+# Initialize managers
 manager = HttpManager()
 tcp_udp_manager = TcpUdpManager()
 certificates_manager = CertificatesResolversManager()
+manual_certs_manager = ManualCertificatesManager()
 api_service = TraefikApiService()
 
+# --- HTTP Configuration ---
 @router.get("/config")
 async def get_config():
     return manager._read_config()
@@ -37,6 +41,7 @@ async def delete_router(name: str):
         raise HTTPException(status_code=404, detail="Router not found")
     return {"msg": "Router deleted"}
 
+# --- HTTP Services ---
 @router.get("/services")
 async def get_services():
     return manager.get_services()
@@ -52,6 +57,7 @@ async def delete_service(name: str):
         raise HTTPException(status_code=404, detail="Service not found")
     return {"msg": "Service deleted"}
 
+# --- Middlewares ---
 @router.get("/middlewares")
 async def get_middlewares():
     return manager.get_middlewares()
@@ -67,6 +73,7 @@ async def delete_middleware(name: str):
         raise HTTPException(status_code=404, detail="Middleware not found")
     return {"msg": "Middleware deleted"}
 
+# --- Certificate Resolvers ---
 @router.get("/certificates-resolvers")
 async def get_certificate_resolvers():
     return certificates_manager.get_certificate_resolvers()
@@ -82,7 +89,42 @@ async def delete_certificate_resolver(name: str):
         raise HTTPException(status_code=404, detail="Certificate Resolver not found")
     return {"msg": "Certificate Resolver deleted"}
 
-# TCP/UDP Management
+# --- Manual Certificates ---
+@router.get("/certificates/manual")
+async def list_manual_certificates():
+    return manual_certs_manager.list_certificates()
+
+@router.post(
+    "/certificates/manual/{name}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_or_update_manual_certificate(
+    name: str,
+    payload: ManualCertificateCreate,
+):
+    manual_certs_manager.add_certificate(
+        domain=name,
+        cert_pem=payload.certificate_pem.encode(),
+        key_pem=payload.private_key_pem.encode(),
+    )
+
+    return {
+        "msg": "Manual certificate stored",
+        "name": name,
+    }
+@router.delete("/certificates/manual/{name}")
+async def delete_manual_certificate(name: str):
+    manual_certs_manager.remove_certificate(name)
+    return {"msg": "Manual certificate deleted"}
+
+@router.get("/certificates/manual/{name}/exists")
+async def manual_certificate_exists(name: str):
+    certs = manual_certs_manager.list_certificates()
+    exists = any(c["domain"] == name for c in certs)
+    return {"name": name, "exists": exists}
+
+
+# --- TCP/UDP Management ---
 
 @router.get("/tcp/routers")
 async def get_tcp_routers():
@@ -143,6 +185,8 @@ async def delete_udp_service(name: str):
     if not tcp_udp_manager.delete_udp_service(name):
         raise HTTPException(status_code=404, detail="UDP Service not found")
     return {"msg": "UDP Service deleted"}
+
+# --- Traefik API Status (Proxy) ---
 
 @router.get("/status/healthy")
 async def get_status():

@@ -17,12 +17,11 @@ class Settings(BaseSettings):
     smtp_password: str
     sender_email: str
     
-    traefik_api_config_file: str = "data/dynamic/traefik_api.yaml"
-    traefik_config_file: str = "data/dynamic/traefik_dynamic.yaml"
-    traefik_config_static: str = "data/static"
+    traefik_config_path: str = "/data"
+     
     traefik_api_url: str  
 
-    tpm_panel_url:str 
+    tp_panel_url:str 
 
 
     model_config = SettingsConfigDict(env_file=".env")
