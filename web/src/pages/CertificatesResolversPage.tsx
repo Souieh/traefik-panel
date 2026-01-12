@@ -173,33 +173,33 @@ export default function CertificatesResolversPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Certificate Resolvers</h1>
-          <p className="text-muted-foreground">
-            Manage your ACME certificate resolvers.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3 ">
-          <Button onClick={openAddResolverModal}>
-            <Plus className="mr-2 h-4 w-4" /> Add Resolver
-          </Button>
-          <Button
-            onClick={() => {
-              setEditingCertificate(null);
-              setIsModalCertOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Certificate
-          </Button>
-        </div>
-      </div>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="resolvers">Resolvers</TabsTrigger>
-          <TabsTrigger value="manual">Manual Certificates</TabsTrigger>
-        </TabsList>
+        {/* Header */}
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Certificate Resolvers</h1>
+            <p className="text-muted-foreground">
+              Manage your ACME certificate resolvers.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 ">
+            <TabsList>
+              <TabsTrigger value="resolvers">Resolvers</TabsTrigger>
+              <TabsTrigger value="manual">Manual Certificates</TabsTrigger>
+            </TabsList>
+            <Button onClick={openAddResolverModal}>
+              <Plus className="mr-2 h-4 w-4" /> Add Resolver
+            </Button>
+            <Button
+              onClick={() => {
+                setEditingCertificate(null);
+                setIsModalCertOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Certificate
+            </Button>
+          </div>
+        </div>
         <div className="rounded-md border p-2 my-2 bg-white">
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <TriangleAlert className="text-sm" />
@@ -292,176 +292,178 @@ export default function CertificatesResolversPage() {
             />
           </div>
         </TabsContent>
-      </Tabs>
 
-      <ManualCertificateModal
-        isOpen={isModalCertOpen}
-        onOpenChange={setIsModalCertOpen}
-        certificate={editingCertificate || undefined}
-        onSaved={fetchManualCerts}
-      />
+        <ManualCertificateModal
+          isOpen={isModalCertOpen}
+          onOpenChange={setIsModalCertOpen}
+          certificate={editingCertificate || undefined}
+          onSaved={fetchManualCerts}
+        />
 
-      {/* Add/Edit Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-106.25">
-          <DialogHeader>
-            <DialogTitle>
-              {editingName ? "Edit Resolver" : "Add New Resolver"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingName
-                ? "Update existing resolver."
-                : "Create a new certificate resolver."}
-            </DialogDescription>
-          </DialogHeader>
+        {/* Add/Edit Modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-106.25">
+            <DialogHeader>
+              <DialogTitle>
+                {editingName ? "Edit Resolver" : "Add New Resolver"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingName
+                  ? "Update existing resolver."
+                  : "Create a new certificate resolver."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmitResolver} className="grid gap-4 py-4">
-            {/* Name */}
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={!!editingName}
-              />
-            </div>
-
-            {/* Email */}
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="user@example.com"
-              />
-            </div>
-
-            {/* Challenge type */}
-            <div className="grid gap-2">
-              <Label>Challenge Type</Label>
-              <div className="flex  items-center gap-4 flex-wrap">
-                <Tabs
-                  className="flex-1 "
-                  value={challengeType}
-                  onValueChange={(v) => setChallengeType(v as any)}
-                >
-                  <TabsList className="flex justify-stretch ">
-                    {[
-                      {
-                        type: "httpChallenge",
-                        title: "HTTP",
-                        description: "ACME HTTP challenge via HTTP-01",
-                        icon: Cpu,
-                      },
-                      {
-                        type: "tlsChallenge",
-                        title: "TLS",
-                        description: "ACME TLS challenge via TLS-ALPN-01",
-                        icon: Lock,
-                      },
-                      {
-                        type: "dnsChallenge",
-                        title: "DNS",
-                        description:
-                          "ACME DNS challenge (requires DNS provider)",
-                        icon: Globe,
-                      },
-                    ].map((c) => (
-                      <TabsTrigger
-                        className="flex-1"
-                        value={c.type}
-                        key={c.type}
-                      >
-                        {c.title}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
-              </div>
-            </div>
-
-            {/* Dynamic fields */}
-            {challengeType === "httpChallenge" && (
+            <form onSubmit={handleSubmitResolver} className="grid gap-4 py-4">
+              {/* Name */}
               <div className="grid gap-2">
-                <Label htmlFor="entryPoint">HTTP Challenge EntryPoint</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
-                  id="entryPoint"
-                  value={entryPoint}
-                  onChange={(e) => setEntryPoint(e.target.value)}
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
-                  placeholder="web"
+                  disabled={!!editingName}
                 />
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {["web", "websecure", "traefik"].map((entryPoint) => (
-                    <Badge
-                      variant={"secondary"}
-                      className="cursor-pointer "
-                      key={entryPoint}
-                      onClick={() => setEntryPoint(entryPoint)}
-                    >
-                      {entryPoint}
-                    </Badge>
-                  ))}
+              </div>
+
+              {/* Email */}
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="user@example.com"
+                />
+              </div>
+
+              {/* Challenge type */}
+              <div className="grid gap-2">
+                <Label>Challenge Type</Label>
+                <div className="flex  items-center gap-4 flex-wrap">
+                  <Tabs
+                    className="flex-1 "
+                    value={challengeType}
+                    onValueChange={(v) => setChallengeType(v as any)}
+                  >
+                    <TabsList className="flex justify-stretch ">
+                      {[
+                        {
+                          type: "httpChallenge",
+                          title: "HTTP",
+                          description: "ACME HTTP challenge via HTTP-01",
+                          icon: Cpu,
+                        },
+                        {
+                          type: "tlsChallenge",
+                          title: "TLS",
+                          description: "ACME TLS challenge via TLS-ALPN-01",
+                          icon: Lock,
+                        },
+                        {
+                          type: "dnsChallenge",
+                          title: "DNS",
+                          description:
+                            "ACME DNS challenge (requires DNS provider)",
+                          icon: Globe,
+                        },
+                      ].map((c) => (
+                        <TabsTrigger
+                          className="flex-1"
+                          value={c.type}
+                          key={c.type}
+                        >
+                          {c.title}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
                 </div>
               </div>
-            )}
 
-            {challengeType === "dnsChallenge" && (
-              <>
+              {/* Dynamic fields */}
+              {challengeType === "httpChallenge" && (
                 <div className="grid gap-2">
-                  <Label htmlFor="dnsProvider">DNS Provider</Label>
+                  <Label htmlFor="entryPoint">HTTP Challenge EntryPoint</Label>
                   <Input
-                    id="dnsProvider"
-                    value={dnsProvider}
-                    onChange={(e) => setDnsProvider(e.target.value)}
+                    id="entryPoint"
+                    value={entryPoint}
+                    onChange={(e) => setEntryPoint(e.target.value)}
                     required
-                    placeholder="cloudflare"
+                    placeholder="web"
                   />
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      "cloudflare",
-                      "route53",
-                      "digitalocean",
-                      "gandi",
-                      "googlecloud",
-                    ].map((provider) => (
+                    {["web", "websecure", "traefik"].map((entryPoint) => (
                       <Badge
                         variant={"secondary"}
                         className="cursor-pointer "
-                        key={provider}
-                        onClick={() => setDnsProvider(provider)}
+                        key={entryPoint}
+                        onClick={() => setEntryPoint(entryPoint)}
                       >
-                        {provider}
+                        {entryPoint}
                       </Badge>
                     ))}
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="dnsDelay">Delay Before Check (seconds)</Label>
-                  <Input
-                    id="dnsDelay"
-                    type="number"
-                    value={dnsDelay}
-                    onChange={(e) => setDnsDelay(Number(e.target.value))}
-                    placeholder="0"
-                  />
-                </div>
-              </>
-            )}
+              )}
 
-            {/* TLS has no fields */}
+              {challengeType === "dnsChallenge" && (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="dnsProvider">DNS Provider</Label>
+                    <Input
+                      id="dnsProvider"
+                      value={dnsProvider}
+                      onChange={(e) => setDnsProvider(e.target.value)}
+                      required
+                      placeholder="cloudflare"
+                    />
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {[
+                        "cloudflare",
+                        "route53",
+                        "digitalocean",
+                        "gandi",
+                        "googlecloud",
+                      ].map((provider) => (
+                        <Badge
+                          variant={"secondary"}
+                          className="cursor-pointer "
+                          key={provider}
+                          onClick={() => setDnsProvider(provider)}
+                        >
+                          {provider}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="dnsDelay">
+                      Delay Before Check (seconds)
+                    </Label>
+                    <Input
+                      id="dnsDelay"
+                      type="number"
+                      value={dnsDelay}
+                      onChange={(e) => setDnsDelay(Number(e.target.value))}
+                      placeholder="0"
+                    />
+                  </div>
+                </>
+              )}
 
-            <DialogFooter>
-              <Button type="submit">Save Resolver</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              {/* TLS has no fields */}
+
+              <DialogFooter>
+                <Button type="submit">Save Resolver</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </Tabs>
     </div>
   );
 }

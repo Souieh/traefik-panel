@@ -15,11 +15,8 @@ venv/
 api/data/
 
 # Ignore everything under data
-data/
+data/**
  
-
-# Keep ONLY the Traefik API router
-!data/dynamic/traefik-api.yaml
 
 # SQLite or other local DBs
 *.sqlite
