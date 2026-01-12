@@ -1,0 +1,2 @@
+# Disable Jekyll to serve plain HTML
+jekyll: false
