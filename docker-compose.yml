@@ -14,8 +14,11 @@ services:
 
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --providers.file.directory=/data/dynamic
+      - --providers.file.directory=/etc/traefik/dynamic
       - --providers.file.watch=true
+      - --configFile=/etc/traefik/static/traefik.yaml
+
+
 
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443 
@@ -23,10 +26,13 @@ services:
     ports:
       - "80:80"
       - "443:443" 
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./data/certs:/certs
-      - ./data/dynamic:/data/dynamic:ro
+      - ./data/traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./data/traefik/static:/etc/traefik/static:ro
+      - ./data/traefik/certs:/certs
+      - ./data/traefik/acme:/acme
 
     networks:
       - tpm-net

@@ -1,10 +1,18 @@
 import os
 import yaml
 from core.config import settings
+from pathlib import Path
 
 class TcpUdpManager:
     def __init__(self):
-        self.config_file = settings.traefik_config_file
+        self.config_file = Path(settings.traefik_config_path, "dynamic/traefik-tcp-udp-configs.yaml") 
+        if not self.config_file.exists():
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.config_file, "w") as f:
+                f.write("")
+
+       
+
 
     def _read_config(self):
         if not os.path.exists(self.config_file):
