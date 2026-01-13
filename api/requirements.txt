@@ -8,3 +8,6 @@ pydantic-settings
 pydantic[email]
 sqlalchemy
 httpx
+pytest
+pytest-cov
+pytest-env

@@ -61,7 +61,16 @@ if ASSETS_DIR.exists():
 else:
     logger.warning(f"Static assets directory not found: {ASSETS_DIR}")
 
+# Health check endpoint
+# ------------------------
+@app.get("/healthz")
+async def health_check():
+    return {"status": "ok"}
+
+
+# ------------------------
 # SPA fallback (React Router)
+# ------------------------
 @app.get("/{full_path:path}")
 async def spa_fallback(full_path: str):
     index_file = WEB_DIR / "index.html"
@@ -69,10 +78,3 @@ async def spa_fallback(full_path: str):
         return FileResponse(index_file, media_type="text/html")
     logger.error(f"SPA index.html not found at {index_file}")
     return {"error": "index.html not found"}
-
-# ------------------------
-# Health check endpoint
-# ------------------------
-@app.get("/healthz")
-async def health_check():
-    return {"status": "ok"}
