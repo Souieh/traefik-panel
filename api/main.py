@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from core.config import settings
 from routers import auth, users, traefik
 from scripts.configure_traefik_api import ensure_traefik_api_config
+from core.database import init_db
 
 # ------------------------
 # Logging
@@ -31,6 +32,11 @@ except Exception as e:
 # FastAPI app setup
 # ------------------------
 app = FastAPI(title="TPM Panel")
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Checking for initial user...")
+    init_db()
 
 # CORS
 origins = [settings.tp_panel_url]  # only allow panel frontend domain
