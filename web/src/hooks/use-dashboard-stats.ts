@@ -1,10 +1,10 @@
-import api from "@/lib/api";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import api from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 // Create types for better type safety
 export interface HealthStatus {
-  status: "RUNNING" | "DOWN" | "BROKEN" | "Checking";
+  status: 'RUNNING' | 'DOWN' | 'BROKEN' | 'Checking';
   details: string;
   error: string;
 }
@@ -28,7 +28,7 @@ export interface DashboardStats {
 // Create a hook for data fetching
 const useDashboardStats = () => {
   const [stats, setStats] = useState<DashboardStats>({
-    healthy: { status: "Checking", details: "", error: "" },
+    healthy: { status: 'Checking', details: '', error: '' },
     config: {
       services: 0,
       routers: 0,
@@ -60,34 +60,30 @@ const useDashboardStats = () => {
         // Group API endpoints logically
         const endpoints = {
           config: {
-            services: "/traefik/services",
-            routers: "/traefik/routers",
-            middlewares: "/traefik/middlewares",
-            tcpRouters: "/traefik/tcp/routers",
-            tcpServices: "/traefik/tcp/services",
-            udpRouters: "/traefik/udp/routers",
-            udpServices: "/traefik/udp/services",
+            services: '/traefik/services',
+            routers: '/traefik/routers',
+            middlewares: '/traefik/middlewares',
+            tcpRouters: '/traefik/tcp/routers',
+            tcpServices: '/traefik/tcp/services',
+            udpRouters: '/traefik/udp/routers',
+            udpServices: '/traefik/udp/services',
           },
           status: {
-            healthy: "/traefik/status/healthy",
-            services: "/traefik/status/services",
-            routers: "/traefik/status/routers",
-            middlewares: "/traefik/status/middlewares",
-            tcpRouters: "/traefik/status/tcp/routers",
-            tcpServices: "/traefik/status/tcp/services",
-            udpRouters: "/traefik/status/udp/routers",
-            udpServices: "/traefik/status/udp/services",
+            healthy: '/traefik/status/healthy',
+            services: '/traefik/status/services',
+            routers: '/traefik/status/routers',
+            middlewares: '/traefik/status/middlewares',
+            tcpRouters: '/traefik/status/tcp/routers',
+            tcpServices: '/traefik/status/tcp/services',
+            udpRouters: '/traefik/status/udp/routers',
+            udpServices: '/traefik/status/udp/services',
           },
         };
 
         // Create all promises at once
         const promises = {
-          config: Object.values(endpoints.config).map((endpoint) =>
-            api.get(endpoint)
-          ),
-          status: Object.values(endpoints.status).map((endpoint) =>
-            api.get(endpoint)
-          ),
+          config: Object.values(endpoints.config).map((endpoint) => api.get(endpoint)),
+          status: Object.values(endpoints.status).map((endpoint) => api.get(endpoint)),
         };
 
         const [configResponses, statusResponses] = await Promise.all([
@@ -107,20 +103,20 @@ const useDashboardStats = () => {
             udpServices: Object.keys(configResponses[6].data).length,
           },
           real: {
-            services: Object.keys(statusResponses[1].data).length,
-            routers: Object.keys(statusResponses[2].data).length,
-            middlewares: Object.keys(statusResponses[3].data).length,
-            tcpRouters: Object.keys(statusResponses[4].data).length,
-            tcpServices: Object.keys(statusResponses[5].data).length,
-            udpRouters: Object.keys(statusResponses[6].data).length,
-            udpServices: Object.keys(statusResponses[7].data).length,
+            services: statusResponses[1].data.length,
+            routers: statusResponses[2].data.length,
+            middlewares: statusResponses[3].data.length,
+            tcpRouters: statusResponses[4].data.length,
+            tcpServices: statusResponses[5].data.length,
+            udpRouters: statusResponses[6].data.length,
+            udpServices: statusResponses[7].data.length,
           },
         });
 
         setError(null);
       } catch (error) {
-        setError("Failed to fetch dashboard statistics");
-        toast.error("Error fetching dashboard stats");
+        setError('Failed to fetch dashboard statistics');
+        toast.error('Error fetching dashboard stats');
       } finally {
         setIsLoading(false);
       }

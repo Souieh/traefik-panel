@@ -1,3 +1,5 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +20,7 @@ class Settings(BaseSettings):
     smtp_password: str = "pass"
     sender_email: str = "noreply@example.com"
 
-    traefik_config_path: str = "/data"
+    traefik_config_path: str = os.environ.get("TRAEFIK_CONFIG_PATH", "./data")
 
     traefik_api_url: str = "http://localhost:8080"
     tp_panel_url: str = "http://localhost:8000"

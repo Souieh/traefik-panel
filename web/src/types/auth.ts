@@ -1,21 +1,27 @@
-export interface User {
-  lastLogin: string | null;
-  createdAt: string | null;
-  username: string;
-  email: string | null;
-  full_name: string | null;
-  disabled: boolean | null;
-  role: "admin" | "operator";
+export interface LoginRequest {
+  username?: string;
+  email?: string;
+  password?: string;
 }
 
-export interface LoginRequest {
+export interface LoginResponseData {
+  access_token: string;
+}
+
+export interface User {
+  id: string;
   username: string;
-  password: string;
+  email: string;
+  full_name?: string;
+  role: string;
+  disabled: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ChangePasswordRequest {
-  old_password: string;
-  new_password: string;
+  old_password?: string;
+  new_password?: string;
 }
 
 export interface ForgotPasswordRequest {
@@ -24,5 +30,5 @@ export interface ForgotPasswordRequest {
 
 export interface ResetPasswordRequest {
   token: string;
-  new_password: string;
+  new_password?: string;
 }

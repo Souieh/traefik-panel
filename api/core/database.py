@@ -176,7 +176,7 @@ def update_user(
         if isinstance(value, UserRole):
             value = value.value
         setattr(db_user, key, value)
-
+    setattr(db_user, "updatedAt", datetime.now())
     db.commit()
     db.refresh(db_user)
     return db_user
