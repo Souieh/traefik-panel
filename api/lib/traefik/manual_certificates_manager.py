@@ -1,41 +1,45 @@
 import os
 import shutil
-from typing import List, Dict
-from pydantic import BaseModel, Field
-from core.config import settings
+from typing import Dict, List
+
 import yaml
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+from core.config import settings
+
+router = APIRouter()
 
 
+# ----------------------
+# Pydantic Models
+# ----------------------
 class ManualCertificate(BaseModel):
     domain: str
     cert_path: str
     key_path: str
 
+    class Config:
+        orm_mode = True
 
+
+class ManualCertificateExists(BaseModel):
+    name: str
+    exists: bool
+
+
+# ----------------------
+# Manager
+# ----------------------
 class ManualCertificatesManager:
     """
     Manages manually-provided TLS certificates for Traefik.
-
-    Scope:
-    - File-based certificates only
-    - Dynamic configuration only
-    - Hot-reload safe
-
-    Non-goals:
-    - ACME
-    - Resolvers
-    - Traefik restarts
     """
 
     def __init__(self) -> None:
-        self.config_certs_path = os.path.join(
-            settings.traefik_config_path,
-            "certs",
-        )
+        self.config_certs_path = os.path.join(settings.traefik_config_path, "certs")
         self.dynamic_tls_file = os.path.join(
-            settings.traefik_config_path,
-            "dynamic",
-            "tls-manual.yml",
+            settings.traefik_config_path, "dynamic", "tls-manual.yml"
         )
 
         os.makedirs(self.config_certs_path, exist_ok=True)
@@ -45,15 +49,9 @@ class ManualCertificatesManager:
     # Public API
     # -------------------------
 
-    def add_certificate(
-        self,
-        domain: str,
-        cert_pem: bytes,
-        key_pem: bytes,
-    ) -> None:
+    def add_certificate(self, domain: str, cert_pem: bytes, key_pem: bytes) -> None:
         cert_dir = self._perspective_domain_dir(domain)
         os.makedirs(cert_dir, exist_ok=True)
-
 
         cert_path = os.path.join(cert_dir, "fullchain.pem")
         key_path = os.path.join(cert_dir, "privkey.pem")
@@ -65,12 +63,9 @@ class ManualCertificatesManager:
 
     def remove_certificate(self, domain: str) -> None:
         cert_dir = self._perspective_domain_dir(domain)
-
-        if not os.path.isdir(cert_dir):
-            return
-
-        shutil.rmtree(cert_dir)
-        self._sync_dynamic_tls()
+        if os.path.isdir(cert_dir):
+            shutil.rmtree(cert_dir)
+            self._sync_dynamic_tls()
 
     def list_certificates(self) -> List[ManualCertificate]:
         certs: List[ManualCertificate] = []
@@ -79,13 +74,11 @@ class ManualCertificatesManager:
             cert_dir = self._perspective_domain_dir(domain)
             cert_traefik_dir = self._domain_dir(domain)
 
-
             if not os.path.isdir(cert_dir):
                 continue
 
             cert_path = os.path.join(cert_dir, "fullchain.pem")
             key_path = os.path.join(cert_dir, "privkey.pem")
-
 
             if os.path.isfile(cert_path) and os.path.isfile(key_path):
                 certs.append(
@@ -98,36 +91,49 @@ class ManualCertificatesManager:
 
         return certs
 
+    def special_list_certificates(self) -> List[dict]:
+        certs: List[dict] = []
+
+        for domain in os.listdir(self.config_certs_path):
+            cert_dir = self._perspective_domain_dir(domain)
+            cert_traefik_dir = self._domain_dir(domain)
+
+            if not os.path.isdir(cert_dir):
+                continue
+
+            cert_path = os.path.join(cert_dir, "fullchain.pem")
+            key_path = os.path.join(cert_dir, "privkey.pem")
+
+            if os.path.isfile(cert_path) and os.path.isfile(key_path):
+                certs.append(
+                    {
+                        "domain": domain,
+                        "cert_path": os.path.join(cert_traefik_dir, "fullchain.pem"),
+                        "key_path": os.path.join(cert_traefik_dir, "privkey.pem"),
+                    }
+                )
+
+        return certs
+
+    def certificate_exists(self, domain: str) -> bool:
+        return any(c.domain == domain for c in self.list_certificates())
+
     # -------------------------
     # Internal mechanics
     # -------------------------
-
     def _sync_dynamic_tls(self) -> None:
-        """
-        Regenerates tls-manual.yml based on filesystem state.
-        This is idempotent and safe.
-        """
-        certificates = []
-
-        for cert in self.list_certificates():
-            certificates.append(
-                {
-                    "certFile": cert.cert_path,
-                    "keyFile": cert.key_path,
-                }
-            )
-
-        data: Dict = {
-            "tls": {
-                "certificates": certificates
-            }
-        }
+        certificates = [
+            {"certFile": cert.cert_path, "keyFile": cert.key_path}
+            for cert in self.list_certificates()
+        ]
+        data: Dict = {"tls": {"certificates": certificates}}
 
         with open(self.dynamic_tls_file, "w") as f:
             yaml.safe_dump(data, f, sort_keys=False)
 
     def _domain_dir(self, domain: str) -> str:
         return os.path.join("/certs", domain)
+
     def _perspective_domain_dir(self, domain: str) -> str:
         return os.path.join(self.config_certs_path, domain)
 
@@ -135,3 +141,29 @@ class ManualCertificatesManager:
     def _write_file(path: str, content: bytes) -> None:
         with open(path, "wb") as f:
             f.write(content)
+
+
+manual_certs_manager = ManualCertificatesManager()
+
+
+# ----------------------
+# FastAPI Endpoints
+# ----------------------
+@router.get("/certificates/manual", response_model=List[ManualCertificate])
+async def list_manual_certificates():
+    return manual_certs_manager.list_certificates()
+
+
+@router.get(
+    "/certificates/manual/{name}/exists", response_model=ManualCertificateExists
+)
+async def manual_certificate_exists(name: str):
+    exists = manual_certs_manager.certificate_exists(name)
+    return ManualCertificateExists(name=name, exists=exists)
+
+
+@router.delete("/certificates/manual/{name}", status_code=204)
+async def delete_manual_certificate(name: str):
+    if not manual_certs_manager.certificate_exists(name):
+        raise HTTPException(status_code=404, detail="Certificate not found")
+    manual_certs_manager.remove_certificate(name)

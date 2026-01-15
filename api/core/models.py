@@ -1,20 +1,23 @@
-from typing import Union 
-from pydantic import BaseModel, ConfigDict , EmailStr, Field
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
+from pydantic import BaseModel, EmailStr, Field
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     username: Union[str, None] = None
+
 
 class UserRole(str, Enum):
     ADMIN = "admin"
     OPERATOR = "operator"
+
+
 class User(BaseModel):
     username: str
     email: Union[str, None] = None
@@ -22,11 +25,14 @@ class User(BaseModel):
     disabled: Union[bool, None] = None
     role: UserRole = UserRole.OPERATOR
 
+
 class UserInDB(User):
     hashed_password: str
 
+
 class UserCreate(User):
     password: str
+
 
 class UserUpdate(BaseModel):
     email: Union[str, None] = None
@@ -35,26 +41,33 @@ class UserUpdate(BaseModel):
     disabled: Union[bool, None] = None
     role: Union[UserRole, None] = None
 
+
 class UserLogin(BaseModel):
     username: str
     password: str
+
 
 class UserChangePassword(BaseModel):
     old_password: str
     new_password: str
 
+
 class UserForgotPassword(BaseModel):
     email: str
+
 
 class UserResetPassword(BaseModel):
     token: str
     new_password: str
 
+
 class TraefikServer(BaseModel):
     url: str
 
+
 class TraefikLoadBalancer(BaseModel):
     servers: list[TraefikServer]
+
 
 class TraefikService(BaseModel):
     loadBalancer: TraefikLoadBalancer
@@ -65,6 +78,7 @@ class TraefikTLS(BaseModel):
     passthrough: Optional[bool] = None
     options: Optional[str] = None
 
+
 class TraefikRouter(BaseModel):
     entryPoints: Optional[List[str]] = None
     rule: str
@@ -72,6 +86,7 @@ class TraefikRouter(BaseModel):
     middlewares: Optional[List[str]] = None
     priority: Optional[int] = None
     tls: Optional[TraefikTLS] = None
+
 
 class TraefikMiddleware(BaseModel):
     basicauth: Optional[Dict[str, Any]] = None
@@ -95,6 +110,15 @@ class TraefikMiddleware(BaseModel):
         extra = "allow"  # still allows unknown or future middleware types
 
 
+class TraefikHttpBlock(BaseModel):
+    routers: Optional[Dict[str, TraefikRouter]] = None
+    services: Optional[Dict[str, TraefikService]] = None
+    middlewares: Optional[Dict[str, TraefikMiddleware]] = None
+
+
+class TraefikHttpConfig(BaseModel):
+    http: Optional[TraefikHttpBlock] = None
+
 
 class TraefikACMEConfig(BaseModel):
     email: Optional[EmailStr] = None
@@ -106,14 +130,30 @@ class TraefikACMEConfig(BaseModel):
     class Config:
         extra = "allow"  # allows extra challenge types if added in future
 
+
 class TraefikCertResolver(BaseModel):
     acme: Optional[TraefikACMEConfig] = None
 
     class Config:
         extra = "allow"  # allow unknown top-level fields (future resolvers)
- 
+
 
 class ManualCertificateCreate(BaseModel):
     certificate_pem: str = Field(..., description="Full PEM certificate chain")
     private_key_pem: str = Field(..., description="PEM private key")
     domains: Optional[List[str]] = None  # optional metadata
+
+
+class ManualCertificateOut(BaseModel):
+    domain: str
+    cert_path: str
+    key_path: str
+
+
+class TraefikTlsCertificatesBlock(BaseModel):
+    certFile: str
+    keyFile: str
+
+
+class TraefikCertificateConfig(BaseModel):
+    certificate: Optional[TraefikTlsCertificatesBlock] = None

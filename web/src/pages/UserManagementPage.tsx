@@ -55,12 +55,6 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-interface UserWithRole extends User {
-  role: string;
-  isDisabled?: boolean;
-  lastLogin?: string;
-  createdAt?: string;
-}
 
 interface RolePermission {
   id: string;
@@ -97,11 +91,11 @@ const rolePermissions: Record<string, RolePermission> = {
 };
 
 export default function UserManagementPage() {
-  const [users, setUsers] = useState<UserWithRole[]>([]);
-  const [currentUser, setCurrentUser] = useState<UserWithRole | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>("all");
@@ -110,12 +104,12 @@ export default function UserManagementPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("operator");
-  const [isDisabled, setisDisabled] = useState(true);
+  const [disabled, setDisabled] = useState(false);
 
   useEffect(() => {
     authService
       .getProfile()
-      .then((u) => setCurrentUser(u as UserWithRole))
+      .then(setCurrentUser)
       .catch(() => {});
     fetchUsers();
   }, []);
@@ -138,18 +132,18 @@ export default function UserManagementPage() {
     setEmail("");
     setPassword("");
     setRole("operator");
-    setisDisabled(true);
+    setDisabled(false);
     setShowPassword(false);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (user: UserWithRole) => {
+  const handleEdit = (user: User) => {
     setEditingUser(user);
     setUsername(user.username);
-    setEmail(user.email);
+    setEmail(user.email || "");
     setPassword("");
     setRole(user.role);
-    setisDisabled(!!user.isDisabled);
+    setDisabled(!!user.disabled);
     setShowPassword(false);
     setIsModalOpen(true);
   };
@@ -165,8 +159,8 @@ export default function UserManagementPage() {
     }
   };
 
-  const handleToggleStatus = async (user: UserWithRole) => {
-    const newStatus = !user.isDisabled;
+  const handleToggleStatus = async (user: User) => {
+    const newStatus = !user.disabled;
     const action = newStatus ? "activate" : "deactivate";
 
     if (!confirm(`Are you sure you want to ${action} user "${user.username}"?`))
@@ -174,8 +168,7 @@ export default function UserManagementPage() {
 
     try {
       await api.put(`/users/${user.username}`, {
-        ...user,
-        isDisabled: newStatus,
+        disabled: newStatus,
       });
       toast.success(`User ${action}d successfully`);
       fetchUsers();
@@ -207,7 +200,7 @@ export default function UserManagementPage() {
         username,
         email,
         role,
-        isDisabled,
+        disabled,
       };
 
       if (password) payload.password = password;
@@ -232,7 +225,7 @@ export default function UserManagementPage() {
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = selectedRole === "all" || user.role === selectedRole;
@@ -241,7 +234,7 @@ export default function UserManagementPage() {
   });
 
   const isAdmin = currentUser?.role === "admin";
-  const isOwnAccount = (user: UserWithRole) =>
+  const isOwnAccount = (user: User) =>
     currentUser && user.username === currentUser.username;
 
   const formatDate = (dateString?: string) => {
@@ -359,11 +352,11 @@ export default function UserManagementPage() {
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Switch checked={isDisabled} onCheckedChange={setisDisabled} />
+              <Switch checked={!disabled} onCheckedChange={(checked) => setDisabled(!checked)} />
               Active Account
             </Label>
             <p className="text-sm text-muted-foreground">
-              {isDisabled
+              {!disabled
                 ? "User can log in and access the system"
                 : "User account is disabled and cannot log in"}
             </p>
@@ -434,7 +427,7 @@ export default function UserManagementPage() {
 
   // Calculate stats
   const totalUsers = users.length;
-  const activeUsers = users.filter((u) => !u.isDisabled).length;
+  const activeUsers = users.filter((u) => !u.disabled).length;
   const adminCount = users.filter((u) => u.role === "admin").length;
   const operatorCount = users.filter((u) => u.role === "operator").length;
 
@@ -594,14 +587,14 @@ export default function UserManagementPage() {
                     <TableHead>Last Login</TableHead>
                     <TableHead>Created</TableHead>
                     {isAdmin && (
-                      <TableHead className="w-[120px]">Actions</TableHead>
+                      <TableHead className="w-30">Actions</TableHead>
                     )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user) => {
                     const isCurrentUser = isOwnAccount(user);
-                    const isDisabledUser = !user.isDisabled;
+                    const isActiveUser = !user.disabled;
 
                     return (
                       <TableRow key={user.username} className="group">
@@ -613,7 +606,7 @@ export default function UserManagementPage() {
                             <div>
                               <div className="font-medium">{user.username}</div>
                               <div className="text-sm text-muted-foreground">
-                                {user.email}
+                                {user.email || "N/A"}
                               </div>
                             </div>
                           </div>
@@ -631,10 +624,10 @@ export default function UserManagementPage() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={isDisabledUser ? "outline" : "secondary"}
+                            variant={isActiveUser ? "outline" : "secondary"}
                             className="gap-1"
                           >
-                            {isDisabledUser ? (
+                            {isActiveUser ? (
                               <>
                                 <CheckCircle className="h-3 w-3" />
                                 Active
@@ -650,12 +643,12 @@ export default function UserManagementPage() {
                         <TableCell>
                           <div className="flex items-center gap-2 text-sm">
                             <Clock className="h-3 w-3 text-muted-foreground" />
-                            {formatDate(user.lastLogin)}
+                            {user.lastLogin ?formatDate(user.lastLogin):"Never"}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            {formatDate(user.createdAt)}
+                            {user.createdAt ? formatDate(user.createdAt) : "Never"}
                           </div>
                         </TableCell>
                         {isAdmin && (
@@ -668,10 +661,10 @@ export default function UserManagementPage() {
                                     variant="ghost"
                                     onClick={() => handleToggleStatus(user)}
                                     title={
-                                      isDisabledUser ? "Deactivate" : "Activate"
+                                      isActiveUser ? "Deactivate" : "Activate"
                                     }
                                   >
-                                    {isDisabledUser ? (
+                                    {isActiveUser ? (
                                       <AlertCircle className="h-4 w-4" />
                                     ) : (
                                       <CheckCircle className="h-4 w-4" />
