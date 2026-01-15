@@ -771,10 +771,6 @@ function EnhancedConfigBuilder({
    Main Page Component
 =========================== */
 export default function MiddlewaresPage() {
-  const [configuredMiddlewares, setConfiguredMiddlewares] = useState<
-    Record<string, MiddlewareConfig>
-  >({});
-  const [liveMiddlewares, setLiveMiddlewares] = useState<ApiMiddleware[]>([]);
   const [allMiddlewares, setAllMiddlewares] = useState<MiddlewareWithSource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -836,8 +832,6 @@ export default function MiddlewaresPage() {
         });
       }
 
-      setConfiguredMiddlewares(configuredMiddlewares);
-
       // Fetch middlewares from Traefik API status
       let apiMiddlewares: ApiMiddleware[] = [];
       try {
@@ -848,8 +842,6 @@ export default function MiddlewaresPage() {
       } catch (err) {
         console.warn('Failed to fetch status middlewares:', err);
       }
-
-      setLiveMiddlewares(apiMiddlewares);
 
       // Combine middlewares
       const allMiddlewaresList: MiddlewareWithSource[] = [];
