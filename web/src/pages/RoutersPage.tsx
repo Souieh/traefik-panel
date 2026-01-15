@@ -416,8 +416,6 @@ http:
    Page Component
 =========================== */
 export default function RoutersPage() {
-  const [configuredRouters, setConfiguredRouters] = useState<Record<string, Router>>({});
-  const [liveRouters, setLiveRouters] = useState<Record<string, any>>({});
   const [allRouters, setAllRouters] = useState<RouterWithSource[]>([]);
   const [services, setServices] = useState<string[]>([]);
   const [certResolvers, setCertResolvers] = useState<string[]>([]);
@@ -524,7 +522,6 @@ export default function RoutersPage() {
       ]);
 
       // Process configured routers
-      setConfiguredRouters(configuredRoutersResponse.data || {});
       setServices(Object.keys(servicesResponse.data || {}));
       setInternalServices(internalServicesResponse.data?.map((s: any) => s.name) || []);
       setMiddlewaresList(Object.keys(middlewaresResponse.data || {}));
@@ -532,7 +529,6 @@ export default function RoutersPage() {
 
       // Process live routers
       const liveRoutersData = liveRoutersResponse.data || {};
-      setLiveRouters(liveRoutersData);
 
       // Combine and deduplicate routers
       const allRoutersList: RouterWithSource[] = [];
