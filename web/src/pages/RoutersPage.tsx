@@ -43,6 +43,7 @@ import {
   EyeOff,
   Pencil,
   Plus,
+  Search,
   Trash2,
   Wand2,
 } from 'lucide-react';
@@ -426,6 +427,8 @@ export default function RoutersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRouterName, setEditingRouterName] = useState<string | null>(null);
   const [showLiveRouters, setShowLiveRouters] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isViewMode, setIsViewMode] = useState(false);
 
   /* ===========================
      Router Fields
@@ -578,6 +581,7 @@ export default function RoutersPage() {
      Open / Edit
   =========================== */
   const openAddModal = () => {
+    setIsViewMode(false);
     setEditingRouterName(null);
     setName('');
     setService('');
@@ -596,13 +600,8 @@ export default function RoutersPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (routerName: string, r: Router) => {
-    // Only allow editing of configured routers
-    const routerToEdit = allRouters.find((r) => r.name === routerName && r.source === 'configured');
-    if (!routerToEdit) {
-      toast.error('Cannot edit live routers from Traefik API');
-      return;
-    }
+  const handleEdit = (routerName: string, r: Router, source: 'configured' | 'live') => {
+    setIsViewMode(source === 'live');
 
     setEditingRouterName(routerName);
     setName(routerName);
@@ -707,11 +706,10 @@ export default function RoutersPage() {
     try {
       const endpoint = protocol === 'http' ? '/traefik/routers' : `/traefik/${protocol}/routers`;
 
+      await api.post(`${endpoint}/${name}`, payload);
       if (editingRouterName) {
-        await api.put(`${endpoint}/${name}`, payload);
         toast.success('Router updated successfully');
       } else {
-        await api.post(`${endpoint}/${name}`, payload);
         toast.success('Router created successfully');
       }
 
@@ -764,7 +762,12 @@ export default function RoutersPage() {
       <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            {editingRouterName ? (
+            {isViewMode ? (
+              <>
+                <Eye className='h-5 w-5' />
+                View Router: <Badge variant='outline'>{editingRouterName}</Badge>
+              </>
+            ) : editingRouterName ? (
               <>
                 <Pencil className='h-5 w-5' />
                 Edit Router: <Badge variant='outline'>{editingRouterName}</Badge>
@@ -779,169 +782,173 @@ export default function RoutersPage() {
         </DialogHeader>
 
         <form className='grid gap-6' onSubmit={handleSubmit}>
-          <div className='grid gap-4 rounded-lg border p-4'>
-            <Label className='text-base font-semibold'>Basic Information</Label>
-            <div className='grid gap-3'>
-              <div>
-                <Label htmlFor='routerName' className='mb-2 block'>
-                  Router Name
-                </Label>
-                <Input
-                  id='routerName'
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={!!editingRouterName}
-                  placeholder='my-router'
-                  className='font-mono'
-                />
-              </div>
-              <div>
-                <Label htmlFor='service' className='mb-2 block'>
-                  Service{' '}
-                  <Badge variant='outline' className='ml-2 text-xs'>
-                    Required
-                  </Badge>
-                </Label>
-                <Select value={service} onValueChange={setService}>
-                  <SelectTrigger id='service'>
-                    <SelectValue placeholder='Select a service...' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[...services, ...internalServices].map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {protocol === 'http' && (
-            <RuleBuilder
-              mode={mode}
-              setMode={setMode}
-              domain={domain}
-              setDomain={setDomain}
-              useRegex={useRegex}
-              setUseRegex={setUseRegex}
-              path={path}
-              setPath={setPath}
-              usePathPrefix={usePathPrefix}
-              setUsePathPrefix={setUsePathPrefix}
-              methods={methods}
-              setMethods={setMethods}
-              rawRule={rawRule}
-              setRawRule={setRawRule}
-            />
-          )}
-
-          {protocol === 'tcp' && (
+          <fieldset disabled={isViewMode} className='grid gap-6 border-none p-0 m-0'>
             <div className='grid gap-4 rounded-lg border p-4'>
-              <Label>Rule</Label>
-              <Input
-                value={rawRule}
-                onChange={(e) => setRawRule(e.target.value)}
-                placeholder='HostSNI(`example.com`)'
-              />
-            </div>
-          )}
-
-          <div className='grid gap-4 rounded-lg border p-4'>
-            <Label className='text-base font-semibold'>Additional Settings</Label>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-3'>
-                <Label>Entry Points</Label>
-                <div className='flex flex-col gap-2'>
-                  {(protocol === 'udp' ? ['udp'] : ['web', 'websecure']).map((ep) => (
-                    <label key={ep} className='flex items-center gap-2'>
-                      <Checkbox
-                        checked={entryPoints.includes(ep)}
-                        onCheckedChange={(v) =>
-                          setEntryPoints(
-                            v ? [...entryPoints, ep] : entryPoints.filter((e) => e !== ep)
-                          )
-                        }
-                      />
-                      <span className='text-sm'>{ep}</span>
-                      {ep === 'websecure' && (
-                        <Badge variant='secondary' className='text-xs'>
-                          Default
-                        </Badge>
-                      )}
-                    </label>
-                  ))}
+              <Label className='text-base font-semibold'>Basic Information</Label>
+              <div className='grid gap-3'>
+                <div>
+                  <Label htmlFor='routerName' className='mb-2 block'>
+                    Router Name
+                  </Label>
+                  <Input
+                    id='routerName'
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={!!editingRouterName}
+                    placeholder='my-router'
+                    className='font-mono'
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='service' className='mb-2 block'>
+                    Service{' '}
+                    <Badge variant='outline' className='ml-2 text-xs'>
+                      Required
+                    </Badge>
+                  </Label>
+                  <Select value={service} onValueChange={setService}>
+                    <SelectTrigger id='service'>
+                      <SelectValue placeholder='Select a service...' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...services, ...internalServices].map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+            </div>
 
-              {protocol === 'http' && (
+            {protocol === 'http' && (
+              <RuleBuilder
+                mode={mode}
+                setMode={setMode}
+                domain={domain}
+                setDomain={setDomain}
+                useRegex={useRegex}
+                setUseRegex={setUseRegex}
+                path={path}
+                setPath={setPath}
+                usePathPrefix={usePathPrefix}
+                setUsePathPrefix={setUsePathPrefix}
+                methods={methods}
+                setMethods={setMethods}
+                rawRule={rawRule}
+                setRawRule={setRawRule}
+              />
+            )}
+
+            {protocol === 'tcp' && (
+              <div className='grid gap-4 rounded-lg border p-4'>
+                <Label>Rule</Label>
+                <Input
+                  value={rawRule}
+                  onChange={(e) => setRawRule(e.target.value)}
+                  placeholder='HostSNI(`example.com`)'
+                />
+              </div>
+            )}
+
+            <div className='grid gap-4 rounded-lg border p-4'>
+              <Label className='text-base font-semibold'>Additional Settings</Label>
+              <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-3'>
-                  <Label>Middlewares (Optional)</Label>
-                  <MultiSelect values={middlewares} onValuesChange={setMiddlewares}>
-                    <MultiSelectTrigger>
-                      <MultiSelectValue placeholder='Select middlewares...' />
-                    </MultiSelectTrigger>
-                    <MultiSelectContent>
-                      <MultiSelectGroup>
-                        {middlewaresList.map((m) => (
-                          <MultiSelectItem key={m} value={m}>
-                            {m}
-                          </MultiSelectItem>
-                        ))}
-                      </MultiSelectGroup>
-                    </MultiSelectContent>
-                  </MultiSelect>
+                  <Label>Entry Points</Label>
+                  <div className='flex flex-col gap-2'>
+                    {(protocol === 'udp' ? ['udp'] : ['web', 'websecure']).map((ep) => (
+                      <label key={ep} className='flex items-center gap-2'>
+                        <Checkbox
+                          checked={entryPoints.includes(ep)}
+                          onCheckedChange={(v) =>
+                            setEntryPoints(
+                              v ? [...entryPoints, ep] : entryPoints.filter((e) => e !== ep)
+                            )
+                          }
+                        />
+                        <span className='text-sm'>{ep}</span>
+                        {ep === 'websecure' && (
+                          <Badge variant='secondary' className='text-xs'>
+                            Default
+                          </Badge>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {protocol === 'http' && (
+                  <div className='space-y-3'>
+                    <Label>Middlewares (Optional)</Label>
+                    <MultiSelect values={middlewares} onValuesChange={setMiddlewares}>
+                      <MultiSelectTrigger>
+                        <MultiSelectValue placeholder='Select middlewares...' />
+                      </MultiSelectTrigger>
+                      <MultiSelectContent>
+                        <MultiSelectGroup>
+                          {middlewaresList.map((m) => (
+                            <MultiSelectItem key={m} value={m}>
+                              {m}
+                            </MultiSelectItem>
+                          ))}
+                        </MultiSelectGroup>
+                      </MultiSelectContent>
+                    </MultiSelect>
+                  </div>
+                )}
+              </div>
+
+              {protocol !== 'udp' && (
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='priority'>Priority (Optional)</Label>
+                    <Input
+                      id='priority'
+                      type='number'
+                      value={priority ?? ''}
+                      onChange={(e) =>
+                        setPriority(e.target.value ? Number(e.target.value) : undefined)
+                      }
+                      placeholder='0-100'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label className='flex items-center gap-2'>
+                      <Checkbox checked={tlsEnabled} onCheckedChange={(v) => setTlsEnabled(!!v)} />
+                      Enable TLS {protocol === 'tcp' && '(Passthrough)'}
+                    </Label>
+                    {tlsEnabled && protocol === 'http' && (
+                      <Select value={certResolver} onValueChange={setCertResolver}>
+                        <SelectTrigger id='service'>
+                          <SelectValue placeholder='Select a certResolver...' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[...certResolvers].map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            {protocol !== 'udp' && (
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='priority'>Priority (Optional)</Label>
-                  <Input
-                    id='priority'
-                    type='number'
-                    value={priority ?? ''}
-                    onChange={(e) =>
-                      setPriority(e.target.value ? Number(e.target.value) : undefined)
-                    }
-                    placeholder='0-100'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label className='flex items-center gap-2'>
-                    <Checkbox checked={tlsEnabled} onCheckedChange={(v) => setTlsEnabled(!!v)} />
-                    Enable TLS {protocol === 'tcp' && '(Passthrough)'}
-                  </Label>
-                  {tlsEnabled && protocol === 'http' && (
-                    <Select value={certResolver} onValueChange={setCertResolver}>
-                      <SelectTrigger id='service'>
-                        <SelectValue placeholder='Select a certResolver...' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[...certResolvers].map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {name && <YAMLPreview router={currentRouter} name={name} />}
+            {name && <YAMLPreview router={currentRouter} name={name} />}
+          </fieldset>
 
           <DialogFooter className='gap-2'>
             <Button type='button' variant='outline' onClick={() => setIsModalOpen(false)}>
-              Cancel
+              {isViewMode ? 'Close' : 'Cancel'}
             </Button>
-            <Button type='submit'>{editingRouterName ? 'Update Router' : 'Create Router'}</Button>
+            {!isViewMode && (
+              <Button type='submit'>{editingRouterName ? 'Update Router' : 'Create Router'}</Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>
@@ -951,6 +958,15 @@ export default function RoutersPage() {
   /* ===========================
      Render
   =========================== */
+  const filteredRouters = allRouters.filter((item) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(searchLower) ||
+      item.router.rule.toLowerCase().includes(searchLower) ||
+      item.router.service.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <div className='space-y-6'>
       <div className='flex justify-between items-center flex-wrap gap-4'>
@@ -974,6 +990,16 @@ export default function RoutersPage() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
+          <div className='relative'>
+            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+            <Input
+              type='search'
+              placeholder='Search routers...'
+              className='w-full sm:w-64 pl-9'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <div className='flex items-center gap-2'>
             <Button
               variant='outline'
@@ -1022,11 +1048,11 @@ export default function RoutersPage() {
         <div className='space-y-4'>
           <div className='flex items-center justify-between text-sm text-muted-foreground'>
             <div>
-              Showing {allRouters.length} router{allRouters.length !== 1 ? 's' : ''}
+              Showing {filteredRouters.length} router{filteredRouters.length !== 1 ? 's' : ''}
               {showLiveRouters && (
                 <span className='ml-2'>
-                  ({allRouters.filter((r) => r.source === 'configured').length} configured,
-                  {allRouters.filter((r) => r.source === 'live').length} live)
+                  ({filteredRouters.filter((r) => r.source === 'configured').length} configured,
+                  {filteredRouters.filter((r) => r.source === 'live').length} live)
                 </span>
               )}
             </div>
@@ -1056,7 +1082,7 @@ export default function RoutersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allRouters.map(({ name, router, source }) => (
+                {filteredRouters.map(({ name, router, source }) => (
                   <TableRow key={name} className='group'>
                     <TableCell>
                       {source === 'configured' ? (
@@ -1125,7 +1151,7 @@ export default function RoutersPage() {
                             <Button
                               size='icon'
                               variant='ghost'
-                              onClick={() => handleEdit(name, router)}
+                              onClick={() => handleEdit(name, router, source)}
                               title='Edit router'
                             >
                               <Pencil className='h-4 w-4' />
@@ -1143,10 +1169,10 @@ export default function RoutersPage() {
                           <Button
                             size='icon'
                             variant='ghost'
-                            disabled
-                            title='Live routers are read-only'
+                            onClick={() => handleEdit(name, router, source)}
+                            title='View router details'
                           >
-                            <Eye className='h-4 w-4 text-muted-foreground' />
+                            <Eye className='h-4 w-4' />
                           </Button>
                         )}
                       </div>
