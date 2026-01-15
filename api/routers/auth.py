@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.database import UserORM, UserSession, get_db, get_user_orm
+from core.dependencies import get_current_user
 from core.models import (
     Token,
     User,
@@ -18,7 +19,6 @@ from core.models import (
     UserLogin,
     UserResetPassword,
 )
-from lib.dependencies import get_current_user
 from lib.security import create_access_token, get_password_hash, verify_password
 from lib.smtp import EmailSender
 

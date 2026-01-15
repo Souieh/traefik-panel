@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 import yaml
 
@@ -53,8 +53,40 @@ class HttpManager:
 
     def _write_config(self, config: TraefikHttpConfig):
         """Writes the configuration to the YAML file."""
+        raw = config.model_dump(exclude_none=True)
+        cleaned = self._prune_empty(raw)
+
+        # Traefik requires http to disappear if empty
+        if "http" in cleaned and not cleaned["http"]:
+            del cleaned["http"]
+
         with open(self.config_file, "w") as f:
-            yaml.dump(config.model_dump(exclude_none=True), f, default_flow_style=False)
+            yaml.safe_dump(
+                cleaned,
+                f,
+                sort_keys=False,
+                default_flow_style=False,
+            )
+
+    def _prune_empty(self, value: Any) -> Any:
+        """
+        Recursively remove:
+        - None
+        - empty dicts
+        - empty lists
+        """
+        if isinstance(value, dict):
+            cleaned = {
+                k: self._prune_empty(v) for k, v in value.items() if v is not None
+            }
+            cleaned = {k: v for k, v in cleaned.items() if v not in ({}, [])}
+            return cleaned
+
+        if isinstance(value, list):
+            cleaned = [self._prune_empty(v) for v in value]
+            return [v for v in cleaned if v not in ({}, [])]
+
+        return value
 
     # -------------------- GET METHODS --------------------
     def get_routers(self) -> Dict[str, TraefikRouter]:
@@ -91,6 +123,7 @@ class HttpManager:
             routers.pop(name, None)
 
         http.routers = routers or None
+
         config.http = (
             http if any([http.routers, http.services, http.middlewares]) else None
         )

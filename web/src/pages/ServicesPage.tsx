@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import api from '@/lib/api';
-import { Eye, EyeOff, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -197,6 +197,8 @@ export default function ServicesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [showLiveServices, setShowLiveServices] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isViewMode, setIsViewMode] = useState(false);
 
   const [name, setName] = useState('');
   const [serverUrls, setServerUrls] = useState<string[]>(['']);
@@ -324,6 +326,7 @@ export default function ServicesPage() {
      Open / Edit
   =========================== */
   const openAddModal = () => {
+    setIsViewMode(false);
     setEditingName(null);
     setName('');
     setServerUrls(['']);
@@ -334,11 +337,7 @@ export default function ServicesPage() {
   };
 
   const handleEdit = (serviceName: string, service: Service, source: 'configured' | 'live') => {
-    // Only allow editing of configured services
-    if (source === 'live') {
-      toast.error('Cannot edit services from Traefik API');
-      return;
-    }
+    setIsViewMode(source === 'live');
 
     setEditingName(serviceName);
     setName(serviceName);
@@ -413,11 +412,10 @@ export default function ServicesPage() {
     try {
       const endpoint = protocol === 'http' ? '/traefik/services' : `/traefik/${protocol}/services`;
 
+      await api.post(`${endpoint}/${trimmedName}`, payload);
       if (editingName) {
-        await api.put(`${endpoint}/${trimmedName}`, payload);
         toast.success('Service updated successfully');
       } else {
-        await api.post(`${endpoint}/${trimmedName}`, payload);
         toast.success('Service created successfully');
       }
 
@@ -469,7 +467,12 @@ export default function ServicesPage() {
       <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            {editingName ? (
+            {isViewMode ? (
+              <>
+                <Eye className='h-5 w-5' />
+                View Service: <Badge variant='outline'>{editingName}</Badge>
+              </>
+            ) : editingName ? (
               <>
                 <Pencil className='h-5 w-5' />
                 Edit Service: <Badge variant='outline'>{editingName}</Badge>
@@ -484,109 +487,113 @@ export default function ServicesPage() {
         </DialogHeader>
 
         <form className='grid gap-6' onSubmit={handleSubmit}>
-          <div className='grid gap-4 rounded-lg border p-4'>
-            <Label className='text-base font-semibold'>Basic Information</Label>
-            <div className='grid gap-3'>
-              <div>
-                <Label htmlFor='serviceName' className='mb-2 block'>
-                  Service Name
-                </Label>
-                <Input
-                  id='serviceName'
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  disabled={!!editingName}
-                  placeholder='my-service'
-                  className='font-mono'
-                />
+          <fieldset disabled={isViewMode} className='grid gap-6 border-none p-0 m-0'>
+            <div className='grid gap-4 rounded-lg border p-4'>
+              <Label className='text-base font-semibold'>Basic Information</Label>
+              <div className='grid gap-3'>
+                <div>
+                  <Label htmlFor='serviceName' className='mb-2 block'>
+                    Service Name
+                  </Label>
+                  <Input
+                    id='serviceName'
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={!!editingName}
+                    placeholder='my-service'
+                    className='font-mono'
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className='grid gap-4 rounded-lg border p-4'>
-            <Label className='text-base font-semibold'>Server Configuration</Label>
-            <div className='space-y-4'>
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between'>
-                  <Label className='text-muted-foreground'>
-                    {protocol === 'http' ? 'Server URLs' : 'Server Addresses'}
-                  </Label>
-                  <Button type='button' variant='outline' size='sm' onClick={addServerUrl}>
-                    <Plus className='h-4 w-4 mr-1' /> Add Server
-                  </Button>
+            <div className='grid gap-4 rounded-lg border p-4'>
+              <Label className='text-base font-semibold'>Server Configuration</Label>
+              <div className='space-y-4'>
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between'>
+                    <Label className='text-muted-foreground'>
+                      {protocol === 'http' ? 'Server URLs' : 'Server Addresses'}
+                    </Label>
+                    <Button type='button' variant='outline' size='sm' onClick={addServerUrl}>
+                      <Plus className='h-4 w-4 mr-1' /> Add Server
+                    </Button>
+                  </div>
+                  <div className='space-y-2'>
+                    {serverUrls.map((url, index) => (
+                      <div key={index} className='flex gap-2'>
+                        <Input
+                          value={url}
+                          onChange={(e) => updateServerUrl(index, e.target.value)}
+                          placeholder={
+                            protocol === 'http' ? 'http://127.0.0.1:3000' : '127.0.0.1:9000'
+                          }
+                          required={index === 0}
+                        />
+                        {serverUrls.length > 1 && (
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='icon'
+                            onClick={() => removeServerUrl(index)}
+                          >
+                            <X className='h-4 w-4' />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className='grid gap-4 rounded-lg border p-4'>
+              <Label className='text-base font-semibold'>Health Check (Optional)</Label>
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='healthCheckPath'>Path</Label>
+                  <Input
+                    id='healthCheckPath'
+                    value={healthCheckPath}
+                    onChange={(e) => setHealthCheckPath(e.target.value)}
+                    placeholder='/health'
+                  />
                 </div>
                 <div className='space-y-2'>
-                  {serverUrls.map((url, index) => (
-                    <div key={index} className='flex gap-2'>
-                      <Input
-                        value={url}
-                        onChange={(e) => updateServerUrl(index, e.target.value)}
-                        placeholder={
-                          protocol === 'http' ? 'http://127.0.0.1:3000' : '127.0.0.1:9000'
-                        }
-                        required={index === 0}
-                      />
-                      {serverUrls.length > 1 && (
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='icon'
-                          onClick={() => removeServerUrl(index)}
-                        >
-                          <X className='h-4 w-4' />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                  <Label htmlFor='healthCheckInterval'>Interval</Label>
+                  <Input
+                    id='healthCheckInterval'
+                    value={healthCheckInterval}
+                    onChange={(e) => setHealthCheckInterval(e.target.value)}
+                    placeholder='30s'
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='healthCheckTimeout'>Timeout</Label>
+                  <Input
+                    id='healthCheckTimeout'
+                    value={healthCheckTimeout}
+                    onChange={(e) => setHealthCheckTimeout(e.target.value)}
+                    placeholder='5s'
+                  />
                 </div>
               </div>
+              <div className='text-sm text-muted-foreground'>
+                Health check is optional. Leave fields empty to disable.
+              </div>
             </div>
-          </div>
 
-          <div className='grid gap-4 rounded-lg border p-4'>
-            <Label className='text-base font-semibold'>Health Check (Optional)</Label>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='healthCheckPath'>Path</Label>
-                <Input
-                  id='healthCheckPath'
-                  value={healthCheckPath}
-                  onChange={(e) => setHealthCheckPath(e.target.value)}
-                  placeholder='/health'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='healthCheckInterval'>Interval</Label>
-                <Input
-                  id='healthCheckInterval'
-                  value={healthCheckInterval}
-                  onChange={(e) => setHealthCheckInterval(e.target.value)}
-                  placeholder='30s'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='healthCheckTimeout'>Timeout</Label>
-                <Input
-                  id='healthCheckTimeout'
-                  value={healthCheckTimeout}
-                  onChange={(e) => setHealthCheckTimeout(e.target.value)}
-                  placeholder='5s'
-                />
-              </div>
-            </div>
-            <div className='text-sm text-muted-foreground'>
-              Health check is optional. Leave fields empty to disable.
-            </div>
-          </div>
-
-          {name && <YAMLPreview service={currentService} name={name} protocol={protocol} />}
+            {name && <YAMLPreview service={currentService} name={name} protocol={protocol} />}
+          </fieldset>
 
           <DialogFooter className='gap-2'>
             <Button type='button' variant='outline' onClick={() => setIsModalOpen(false)}>
-              Cancel
+              {isViewMode ? 'Close' : 'Cancel'}
             </Button>
-            <Button type='submit'>{editingName ? 'Update Service' : 'Create Service'}</Button>
+            {!isViewMode && (
+              <Button type='submit'>{editingName ? 'Update Service' : 'Create Service'}</Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>
@@ -596,6 +603,17 @@ export default function ServicesPage() {
   /* ===========================
      Render
   =========================== */
+  const filteredServices = allServices.filter((item) => {
+    const searchLower = searchTerm.toLowerCase();
+    const servers = item.service.loadBalancer?.servers || [];
+    const serverString = servers
+      .map((s) => s.url || s.address)
+      .join(' ')
+      .toLowerCase();
+
+    return item.name.toLowerCase().includes(searchLower) || serverString.includes(searchLower);
+  });
+
   return (
     <div className='space-y-6'>
       <div className='flex justify-between items-center flex-wrap gap-4'>
@@ -619,6 +637,16 @@ export default function ServicesPage() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
+          <div className='relative'>
+            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+            <Input
+              type='search'
+              placeholder='Search services...'
+              className='w-full sm:w-64 pl-9'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <div className='flex items-center gap-2'>
             <Button
               variant='outline'
@@ -669,11 +697,11 @@ export default function ServicesPage() {
         <div className='space-y-4'>
           <div className='flex items-center justify-between text-sm text-muted-foreground'>
             <div>
-              Showing {allServices.length} service{allServices.length !== 1 ? 's' : ''}
+              Showing {filteredServices.length} service{filteredServices.length !== 1 ? 's' : ''}
               {showLiveServices && (
                 <span className='ml-2'>
-                  ({allServices.filter((s) => s.source === 'configured').length} configured,
-                  {allServices.filter((s) => s.source === 'live').length} live)
+                  ({filteredServices.filter((s) => s.source === 'configured').length} configured,
+                  {filteredServices.filter((s) => s.source === 'live').length} live)
                 </span>
               )}
             </div>
@@ -701,7 +729,7 @@ export default function ServicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allServices.map(({ name, service, source }) => (
+                {filteredServices.map(({ name, service, source }) => (
                   <TableRow key={name} className='group'>
                     <TableCell>
                       {source === 'configured' ? (
@@ -760,10 +788,10 @@ export default function ServicesPage() {
                           <Button
                             size='icon'
                             variant='ghost'
-                            disabled
-                            title='Live services are read-only'
+                            onClick={() => handleEdit(name, service, source)}
+                            title='View service details'
                           >
-                            <Eye className='h-4 w-4 text-muted-foreground' />
+                            <Eye className='h-4 w-4' />
                           </Button>
                         )}
                       </div>
