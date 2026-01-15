@@ -1,7 +1,7 @@
-import ManualCertificateModal from "@/components/ManualCertificateModal";
-import ManualCertificatesTable from "@/components/ManualCertificatesTable";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import ManualCertificateModal from '@/components/ManualCertificateModal';
+import ManualCertificatesTable from '@/components/ManualCertificatesTable';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -19,22 +19,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import api from "@/lib/api";
-import {
-  Cpu,
-  Globe,
-  Lock,
-  Pencil,
-  Plus,
-  Trash2,
-  TriangleAlert,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import api from '@/lib/api';
+import { Cpu, Globe, Lock, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
-type ChallengeType = "httpChallenge" | "tlsChallenge" | "dnsChallenge";
+type ChallengeType = 'httpChallenge' | 'tlsChallenge' | 'dnsChallenge';
 
 interface Resolver {
   acme?: {
@@ -57,40 +49,37 @@ export default function CertificatesResolversPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("resolvers");
+  const [activeTab, setActiveTab] = useState('resolvers');
   const [manualCerts, setManualCerts] = useState<ManualCertificate[]>([]);
 
   const [isModalCertOpen, setIsModalCertOpen] = useState(false);
-  const [editingCertificate, setEditingCertificate] =
-    useState<ManualCertificate | null>(null);
+  const [editingCertificate, setEditingCertificate] = useState<ManualCertificate | null>(null);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [challengeType, setChallengeType] =
-    useState<ChallengeType>("httpChallenge");
-  const [entryPoint, setEntryPoint] = useState("web");
-  const [dnsProvider, setDnsProvider] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [challengeType, setChallengeType] = useState<ChallengeType>('httpChallenge');
+  const [entryPoint, setEntryPoint] = useState('web');
+  const [dnsProvider, setDnsProvider] = useState('');
   const [dnsDelay, setDnsDelay] = useState(0);
 
   // Fetch resolvers from backend
   const fetchResolvers = async () => {
     try {
-      const response = await api.get("/traefik/certificates-resolvers");
+      const response = await api.get('/traefik/certificates-resolvers');
       setResolvers(response.data || {});
     } catch {
-      toast.error("Error fetching resolvers");
+      toast.error('Error fetching resolvers');
     } finally {
       setIsLoading(false);
     }
   };
 
   const fetchManualCerts = async () => {
-    const res = await api.get("/traefik/certificates/manual");
+    const res = await api.get('/traefik/certificates/manual');
     setManualCerts(res.data || []);
   };
 
-  const loadAll = async () =>
-    Promise.all([fetchResolvers(), fetchManualCerts()]);
+  const loadAll = async () => Promise.all([fetchResolvers(), fetchManualCerts()]);
 
   useEffect(() => {
     loadAll();
@@ -99,11 +88,11 @@ export default function CertificatesResolversPage() {
   // Open modal for add
   const openAddResolverModal = () => {
     setEditingName(null);
-    setName("");
-    setEmail("");
-    setChallengeType("httpChallenge");
-    setEntryPoint("web");
-    setDnsProvider("");
+    setName('');
+    setEmail('');
+    setChallengeType('httpChallenge');
+    setEntryPoint('web');
+    setDnsProvider('');
     setDnsDelay(0);
     setIsModalOpen(true);
   };
@@ -115,15 +104,15 @@ export default function CertificatesResolversPage() {
     const acme = config.acme;
     if (!acme) return;
 
-    setEmail(acme.email || "");
+    setEmail(acme.email || '');
     if (acme.httpChallenge) {
-      setChallengeType("httpChallenge");
-      setEntryPoint(acme.httpChallenge.entryPoint || "web");
+      setChallengeType('httpChallenge');
+      setEntryPoint(acme.httpChallenge.entryPoint || 'web');
     } else if (acme.tlsChallenge) {
-      setChallengeType("tlsChallenge");
+      setChallengeType('tlsChallenge');
     } else if (acme.dnsChallenge) {
-      setChallengeType("dnsChallenge");
-      setDnsProvider(acme.dnsChallenge.provider || "");
+      setChallengeType('dnsChallenge');
+      setDnsProvider(acme.dnsChallenge.provider || '');
       setDnsDelay(acme.dnsChallenge.delayBeforeCheck || 0);
     }
     setIsModalOpen(true);
@@ -133,10 +122,10 @@ export default function CertificatesResolversPage() {
     if (!confirm(`Delete resolver ${resolverName}?`)) return;
     try {
       await api.delete(`/traefik/certificates-resolvers/${resolverName}`);
-      toast.success("Deleted");
+      toast.success('Deleted');
       fetchResolvers();
     } catch {
-      toast.error("Error deleting resolver");
+      toast.error('Error deleting resolver');
     }
   };
 
@@ -144,18 +133,18 @@ export default function CertificatesResolversPage() {
     e.preventDefault();
 
     const acme: any = { email };
-    if (challengeType === "httpChallenge") acme.httpChallenge = { entryPoint };
-    if (challengeType === "tlsChallenge") acme.tlsChallenge = {};
-    if (challengeType === "dnsChallenge")
+    if (challengeType === 'httpChallenge') acme.httpChallenge = { entryPoint };
+    if (challengeType === 'tlsChallenge') acme.tlsChallenge = {};
+    if (challengeType === 'dnsChallenge')
       acme.dnsChallenge = { provider: dnsProvider, delayBeforeCheck: dnsDelay };
 
     try {
       await api.post(`/traefik/certificates-resolvers/${name}`, { acme });
-      toast.success("Saved");
+      toast.success('Saved');
       setIsModalOpen(false);
       fetchResolvers();
     } catch {
-      toast.error("Error saving resolver");
+      toast.error('Error saving resolver');
     }
   };
 
@@ -163,32 +152,30 @@ export default function CertificatesResolversPage() {
     if (!confirm(`Delete resolver ${certName}?`)) return;
     try {
       await api.delete(`/traefik/certificates/manual/${certName}`);
-      toast.success("Deleted");
+      toast.success('Deleted');
       fetchResolvers();
     } catch {
-      toast.error("Error deleting resolver");
+      toast.error('Error deleting resolver');
     }
   };
   handleDeleteCert;
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         {/* Header */}
-        <div className="flex justify-between items-center flex-wrap gap-4">
+        <div className='flex justify-between items-center flex-wrap gap-4'>
           <div>
-            <h1 className="text-2xl font-bold">Certificate Resolvers</h1>
-            <p className="text-muted-foreground">
-              Manage your ACME certificate resolvers.
-            </p>
+            <h1 className='text-2xl font-bold'>Certificate Resolvers</h1>
+            <p className='text-muted-foreground'>Manage your ACME certificate resolvers.</p>
           </div>
-          <div className="flex flex-wrap gap-3 ">
+          <div className='flex flex-wrap gap-3 '>
             <TabsList>
-              <TabsTrigger value="resolvers">Resolvers</TabsTrigger>
-              <TabsTrigger value="manual">Manual Certificates</TabsTrigger>
+              <TabsTrigger value='resolvers'>Resolvers</TabsTrigger>
+              <TabsTrigger value='manual'>Manual Certificates</TabsTrigger>
             </TabsList>
             <Button onClick={openAddResolverModal}>
-              <Plus className="mr-2 h-4 w-4" /> Add Resolver
+              <Plus className='mr-2 h-4 w-4' /> Add Resolver
             </Button>
             <Button
               onClick={() => {
@@ -196,67 +183,63 @@ export default function CertificatesResolversPage() {
                 setIsModalCertOpen(true);
               }}
             >
-              <Plus className="mr-2 h-4 w-4" /> Add Certificate
+              <Plus className='mr-2 h-4 w-4' /> Add Certificate
             </Button>
           </div>
         </div>
-        <div className="rounded-md border p-2 my-2 bg-white">
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <TriangleAlert className="text-sm" />
-            {activeTab === "resolvers"
-              ? "Changes here require Traefik restart, which you will need to do it manually."
-              : "Changes here take effect immediately"}
+        <div className='rounded-md border p-2 my-2 bg-white'>
+          <p className='text-sm text-muted-foreground flex items-center gap-2'>
+            <TriangleAlert className='text-sm' />
+            {activeTab === 'resolvers'
+              ? 'Changes here require Traefik restart, which you will need to do it manually.'
+              : 'Changes here take effect immediately'}
           </p>
         </div>
 
-        <TabsContent value="resolvers">
+        <TabsContent value='resolvers'>
           {/* Resolvers table */}
-          <div className="rounded-md border bg-white">
+          <div className='rounded-md border bg-white'>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Challenge</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className='text-right'>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {Object.entries(resolvers).map(([resolverName, config]) => {
                   const acme = config.acme;
-                  let challengeLabel = "-";
+                  let challengeLabel = '-';
                   if (acme?.httpChallenge)
                     challengeLabel = `HTTP (${acme.httpChallenge.entryPoint})`;
-                  else if (acme?.tlsChallenge) challengeLabel = "TLS";
+                  else if (acme?.tlsChallenge) challengeLabel = 'TLS';
                   else if (acme?.dnsChallenge)
-                    challengeLabel = `DNS (${
-                      acme.dnsChallenge.provider
-                    }, delay: ${acme.dnsChallenge.delayBeforeCheck ?? 0})`;
+                    challengeLabel = `DNS (${acme.dnsChallenge.provider}, delay: ${
+                      acme.dnsChallenge.delayBeforeCheck ?? 0
+                    })`;
 
                   return (
                     <TableRow key={resolverName}>
-                      <TableCell className="font-medium">
-                        {resolverName}
-                      </TableCell>
+                      <TableCell className='font-medium'>{resolverName}</TableCell>
                       <TableCell>{acme?.email}</TableCell>
                       <TableCell>{challengeLabel}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className='text-right'>
+                        <div className='flex justify-end gap-2'>
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              handleEditResolver(resolverName, config)
-                            }
+                            variant='ghost'
+                            size='icon'
+                            onClick={() => handleEditResolver(resolverName, config)}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className='h-4 w-4' />
                           </Button>
                           <Button
-                            variant="destructive"
-                            size="icon"
+                            size='icon'
+                            variant='ghost'
                             onClick={() => handleDeleteResolver(resolverName)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className='h-4 w-4  text-destructive' />
                           </Button>
                         </div>
                       </TableCell>
@@ -265,10 +248,7 @@ export default function CertificatesResolversPage() {
                 })}
                 {Object.keys(resolvers).length === 0 && !isLoading && (
                   <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-muted-foreground"
-                    >
+                    <TableCell colSpan={4} className='text-center text-muted-foreground'>
                       No resolvers found
                     </TableCell>
                   </TableRow>
@@ -278,9 +258,9 @@ export default function CertificatesResolversPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="manual">
+        <TabsContent value='manual'>
           {/* Resolvers table */}
-          <div className="rounded-md border bg-white">
+          <div className='rounded-md border bg-white'>
             <ManualCertificatesTable
               certificates={manualCerts}
               onEdit={(cert) => {
@@ -302,24 +282,20 @@ export default function CertificatesResolversPage() {
 
         {/* Add/Edit Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-106.25">
+          <DialogContent className='sm:max-w-106.25'>
             <DialogHeader>
-              <DialogTitle>
-                {editingName ? "Edit Resolver" : "Add New Resolver"}
-              </DialogTitle>
+              <DialogTitle>{editingName ? 'Edit Resolver' : 'Add New Resolver'}</DialogTitle>
               <DialogDescription>
-                {editingName
-                  ? "Update existing resolver."
-                  : "Create a new certificate resolver."}
+                {editingName ? 'Update existing resolver.' : 'Create a new certificate resolver.'}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmitResolver} className="grid gap-4 py-4">
+            <form onSubmit={handleSubmitResolver} className='grid gap-4 py-4'>
               {/* Name */}
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+              <div className='grid gap-2'>
+                <Label htmlFor='name'>Name</Label>
                 <Input
-                  id="name"
+                  id='name'
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -328,54 +304,49 @@ export default function CertificatesResolversPage() {
               </div>
 
               {/* Email */}
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+              <div className='grid gap-2'>
+                <Label htmlFor='email'>Email</Label>
                 <Input
-                  id="email"
-                  type="email"
+                  id='email'
+                  type='email'
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="user@example.com"
+                  placeholder='user@example.com'
                 />
               </div>
 
               {/* Challenge type */}
-              <div className="grid gap-2">
+              <div className='grid gap-2'>
                 <Label>Challenge Type</Label>
-                <div className="flex  items-center gap-4 flex-wrap">
+                <div className='flex  items-center gap-4 flex-wrap'>
                   <Tabs
-                    className="flex-1 "
+                    className='flex-1 '
                     value={challengeType}
                     onValueChange={(v) => setChallengeType(v as any)}
                   >
-                    <TabsList className="flex justify-stretch ">
+                    <TabsList className='flex justify-stretch '>
                       {[
                         {
-                          type: "httpChallenge",
-                          title: "HTTP",
-                          description: "ACME HTTP challenge via HTTP-01",
+                          type: 'httpChallenge',
+                          title: 'HTTP',
+                          description: 'ACME HTTP challenge via HTTP-01',
                           icon: Cpu,
                         },
                         {
-                          type: "tlsChallenge",
-                          title: "TLS",
-                          description: "ACME TLS challenge via TLS-ALPN-01",
+                          type: 'tlsChallenge',
+                          title: 'TLS',
+                          description: 'ACME TLS challenge via TLS-ALPN-01',
                           icon: Lock,
                         },
                         {
-                          type: "dnsChallenge",
-                          title: "DNS",
-                          description:
-                            "ACME DNS challenge (requires DNS provider)",
+                          type: 'dnsChallenge',
+                          title: 'DNS',
+                          description: 'ACME DNS challenge (requires DNS provider)',
                           icon: Globe,
                         },
                       ].map((c) => (
-                        <TabsTrigger
-                          className="flex-1"
-                          value={c.type}
-                          key={c.type}
-                        >
+                        <TabsTrigger className='flex-1' value={c.type} key={c.type}>
                           {c.title}
                         </TabsTrigger>
                       ))}
@@ -385,21 +356,21 @@ export default function CertificatesResolversPage() {
               </div>
 
               {/* Dynamic fields */}
-              {challengeType === "httpChallenge" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="entryPoint">HTTP Challenge EntryPoint</Label>
+              {challengeType === 'httpChallenge' && (
+                <div className='grid gap-2'>
+                  <Label htmlFor='entryPoint'>HTTP Challenge EntryPoint</Label>
                   <Input
-                    id="entryPoint"
+                    id='entryPoint'
                     value={entryPoint}
                     onChange={(e) => setEntryPoint(e.target.value)}
                     required
-                    placeholder="web"
+                    placeholder='web'
                   />
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {["web", "websecure", "traefik"].map((entryPoint) => (
+                  <div className='flex flex-wrap gap-2 mt-1'>
+                    {['web', 'websecure', 'traefik'].map((entryPoint) => (
                       <Badge
-                        variant={"secondary"}
-                        className="cursor-pointer "
+                        variant={'secondary'}
+                        className='cursor-pointer '
                         key={entryPoint}
                         onClick={() => setEntryPoint(entryPoint)}
                       >
@@ -410,46 +381,40 @@ export default function CertificatesResolversPage() {
                 </div>
               )}
 
-              {challengeType === "dnsChallenge" && (
+              {challengeType === 'dnsChallenge' && (
                 <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="dnsProvider">DNS Provider</Label>
+                  <div className='grid gap-2'>
+                    <Label htmlFor='dnsProvider'>DNS Provider</Label>
                     <Input
-                      id="dnsProvider"
+                      id='dnsProvider'
                       value={dnsProvider}
                       onChange={(e) => setDnsProvider(e.target.value)}
                       required
-                      placeholder="cloudflare"
+                      placeholder='cloudflare'
                     />
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {[
-                        "cloudflare",
-                        "route53",
-                        "digitalocean",
-                        "gandi",
-                        "googlecloud",
-                      ].map((provider) => (
-                        <Badge
-                          variant={"secondary"}
-                          className="cursor-pointer "
-                          key={provider}
-                          onClick={() => setDnsProvider(provider)}
-                        >
-                          {provider}
-                        </Badge>
-                      ))}
+                    <div className='flex flex-wrap gap-2 mt-1'>
+                      {['cloudflare', 'route53', 'digitalocean', 'gandi', 'googlecloud'].map(
+                        (provider) => (
+                          <Badge
+                            variant={'secondary'}
+                            className='cursor-pointer '
+                            key={provider}
+                            onClick={() => setDnsProvider(provider)}
+                          >
+                            {provider}
+                          </Badge>
+                        )
+                      )}
                     </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="dnsDelay">
-                      Delay Before Check (seconds)
-                    </Label>
+                  <div className='grid gap-2'>
+                    <Label htmlFor='dnsDelay'>Delay Before Check (seconds)</Label>
                     <Input
-                      id="dnsDelay"
-                      type="number"
+                      id='dnsDelay'
+                      type='number'
                       value={dnsDelay}
                       onChange={(e) => setDnsDelay(Number(e.target.value))}
-                      placeholder="0"
+                      placeholder='0'
                     />
                   </div>
                 </>
@@ -458,7 +423,7 @@ export default function CertificatesResolversPage() {
               {/* TLS has no fields */}
 
               <DialogFooter>
-                <Button type="submit">Save Resolver</Button>
+                <Button type='submit'>Save Resolver</Button>
               </DialogFooter>
             </form>
           </DialogContent>
