@@ -11,9 +11,6 @@ import type {
 export const authService = {
   login: async (data: LoginRequest) => {
     const response = await api.post<LoginResponseData>('/login', data);
-    if (response.data.access_token) {
-      localStorage.setItem('access_token', response.data.access_token);
-    }
     return response.data;
   },
 
@@ -22,7 +19,6 @@ export const authService = {
       await api.post('/logout');
     } finally {
       localStorage.removeItem('access_token');
-      window.location.replace('/auth/login');
     }
   },
 

@@ -1,6 +1,7 @@
 import { authService } from '@/services/auth';
 import type { LoginRequest, User } from '@/types/auth';
 import { type ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { setAuthToken } from './api';
 
 interface AuthContextType {
   user: User | null;
@@ -20,11 +21,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem('access_token');
       if (token) {
+        setAuthToken(token);
         try {
           const userData = await authService.getProfile();
           setUser(userData);
         } catch (error) {
-          // Interceptors in api.ts will handle redirects for errors.
+          localStorage.removeItem('access_token');
+          setAuthToken(null);
           setUser(null);
         }
       }
@@ -35,13 +38,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (data: LoginRequest) => {
-    await authService.login(data);
-    const userData = await authService.getProfile();
-    setUser(userData);
+    const response = await authService.login(data);
+    const { access_token: token } = response;
+    localStorage.setItem('access_token', token);
+    setAuthToken(token);
+    try {
+      const userData = await authService.getProfile();
+      setUser(userData);
+    } catch (error) {
+      localStorage.removeItem('access_token');
+      setAuthToken(null);
+      setUser(null);
+    }
   };
 
   const logout = async () => {
     await authService.logout();
+    setAuthToken(null);
     setUser(null);
   };
 
