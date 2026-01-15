@@ -191,8 +191,6 @@ ${
 }
 
 export default function ServicesPage() {
-  const [configuredServices, setConfiguredServices] = useState<Record<string, Service>>({});
-  const [liveServices, setLiveServices] = useState<ApiService[]>([]);
   const [allServices, setAllServices] = useState<ServiceWithSource[]>([]);
   const [protocol, setProtocol] = useState<'http' | 'tcp' | 'udp'>('http');
   const [isLoading, setIsLoading] = useState(true);
@@ -266,8 +264,6 @@ export default function ServicesPage() {
         });
       }
 
-      setConfiguredServices(configuredServices);
-
       // Fetch services from Traefik API status
       const statusEndpoint =
         protocol === 'http' ? '/traefik/status/services' : `/traefik/status/${protocol}/services`;
@@ -280,8 +276,6 @@ export default function ServicesPage() {
       } catch (err) {
         console.warn('Failed to fetch status services:', err);
       }
-
-      setLiveServices(apiServices);
 
       // Combine services
       const allServicesList: ServiceWithSource[] = [];
