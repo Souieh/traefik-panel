@@ -1,3 +1,5 @@
+import { ServiceYAMLPreview } from '@/components/ServiceYAMLPreview';
+import { ServicesTable, type Service, type ServiceWithSource } from '@/components/ServicesTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,38 +11,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import api from '@/lib/api';
-import { Eye, EyeOff, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Pencil, Plus, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
-interface Service {
-  loadBalancer: {
-    servers: { url?: string; address?: string }[];
-    healthCheck?: {
-      path?: string;
-      interval?: string;
-      timeout?: string;
-    };
-  };
-}
-
-interface ServiceWithSource {
-  name: string;
-  service: Service;
-  source: 'configured' | 'live'; // 'configured' = from panel, 'live' = from Traefik API
-  protocol: 'http' | 'tcp' | 'udp';
-  isApiService?: boolean;
-}
 
 interface ApiService {
   name?: string;
@@ -74,121 +49,6 @@ const isApiService = (value: unknown): value is ApiService => {
 const isValidServiceName = (name: unknown): name is string => {
   return typeof name === 'string' && name.length > 0;
 };
-
-/* ===========================
-   Health Check Status Component
-=========================== */
-function HealthCheckStatus({ service }: { service: Service }) {
-  const hasHealthCheck = !!service.loadBalancer?.healthCheck;
-
-  if (!hasHealthCheck) {
-    return (
-      <Badge variant='outline' className='text-xs'>
-        None
-      </Badge>
-    );
-  }
-
-  const hc = service.loadBalancer.healthCheck || {};
-  return (
-    <div className='flex flex-col gap-1'>
-      <Badge className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'>Enabled</Badge>
-      <div className='text-xs text-muted-foreground space-y-1'>
-        {hc.path && <div>Path: {hc.path}</div>}
-        {hc.interval && <div>Interval: {hc.interval}</div>}
-        {hc.timeout && <div>Timeout: {hc.timeout}</div>}
-      </div>
-    </div>
-  );
-}
-
-/* ===========================
-   Servers Display Component
-=========================== */
-function ServersDisplay({
-  service,
-  protocol,
-}: {
-  service: Service;
-  protocol: 'http' | 'tcp' | 'udp';
-}) {
-  const servers = service.loadBalancer?.servers || [];
-
-  if (servers.length === 0) {
-    return <span className='text-sm text-muted-foreground'>No servers</span>;
-  }
-
-  return (
-    <div className='space-y-1'>
-      {servers.slice(0, 3).map((server, index) => (
-        <Badge key={index} variant='secondary' className='font-mono text-xs block'>
-          {protocol === 'http' ? server.url : server.address}
-        </Badge>
-      ))}
-      {servers.length > 3 && (
-        <span className='text-xs text-muted-foreground'>+{servers.length - 3} more</span>
-      )}
-    </div>
-  );
-}
-
-/* ===========================
-   YAML Preview Component
-=========================== */
-function YAMLPreview({
-  service,
-  name,
-  protocol,
-}: {
-  service: Service;
-  name: string;
-  protocol: 'http' | 'tcp' | 'udp';
-}) {
-  const servers = service.loadBalancer?.servers || [];
-  const healthCheck = service.loadBalancer?.healthCheck;
-
-  const yamlContent = `# Service Configuration Preview
-${protocol}:
-  services:
-    ${name}:
-      loadBalancer:
-        servers:
-${servers
-  .map(
-    (server) =>
-      `          - ${protocol === 'http' ? 'url' : 'address'}: "${
-        protocol === 'http' ? server.url : server.address
-      }"`
-  )
-  .join('\n')}
-${
-  healthCheck
-    ? `        healthCheck:
-          path: "${healthCheck.path || ''}"
-          ${healthCheck.interval ? `interval: "${healthCheck.interval}"` : ''}
-          ${healthCheck.timeout ? `timeout: "${healthCheck.timeout}"` : ''}`
-    : ''
-}`;
-
-  return (
-    <div className='space-y-2 rounded-lg border p-4'>
-      <div className='flex items-center justify-between'>
-        <Label className='flex items-center gap-2'>
-          <code className='text-sm font-semibold'>YAML Configuration Preview</code>
-        </Label>
-        <Badge variant='outline' className='font-mono text-xs'>
-          {name || 'service-name'}
-        </Badge>
-      </div>
-      <pre className='text-sm bg-muted/30 p-3 rounded-md overflow-x-auto font-mono whitespace-pre-wrap'>
-        {yamlContent}
-      </pre>
-      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-        <span>This is how the service will appear in your Traefik configuration file</span>
-      </div>
-    </div>
-  );
-}
 
 export default function ServicesPage() {
   const [allServices, setAllServices] = useState<ServiceWithSource[]>([]);
@@ -584,7 +444,9 @@ export default function ServicesPage() {
               </div>
             </div>
 
-            {name && <YAMLPreview service={currentService} name={name} protocol={protocol} />}
+            {name && (
+              <ServiceYAMLPreview service={currentService} name={name} protocol={protocol} />
+            )}
           </fieldset>
 
           <DialogFooter className='gap-2'>
@@ -717,90 +579,12 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          <div className='rounded-lg border'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className='w-10'></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Servers</TableHead>
-                  <TableHead>Health Check</TableHead>
-                  <TableHead className='w-[100px]'>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredServices.map(({ name, service, source }) => (
-                  <TableRow key={name} className='group'>
-                    <TableCell>
-                      {source === 'configured' ? (
-                        <div
-                          className='w-3 h-3 rounded-full bg-blue-500'
-                          title='Configured via panel'
-                        ></div>
-                      ) : (
-                        <div
-                          className='w-3 h-3 rounded-full bg-green-500'
-                          title='Live from Traefik API'
-                        ></div>
-                      )}
-                    </TableCell>
-                    <TableCell className='font-medium'>
-                      <div className='flex items-center gap-2'>
-                        {name}
-                        {source === 'live' && (
-                          <Badge
-                            variant='outline'
-                            className='text-xs bg-green-50 text-green-700 border-green-200'
-                          >
-                            Live
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <ServersDisplay service={service} protocol={protocol} />
-                    </TableCell>
-                    <TableCell>
-                      <HealthCheckStatus service={service} />
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
-                        {source === 'configured' ? (
-                          <>
-                            <Button
-                              size='icon'
-                              variant='ghost'
-                              onClick={() => handleEdit(name, service, source)}
-                              title='Edit service'
-                            >
-                              <Pencil className='h-4 w-4' />
-                            </Button>
-                            <Button
-                              size='icon'
-                              variant='ghost'
-                              onClick={() => handleDelete(name, source)}
-                              title='Delete service'
-                            >
-                              <Trash2 className='h-4 w-4 text-destructive' />
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            size='icon'
-                            variant='ghost'
-                            onClick={() => handleEdit(name, service, source)}
-                            title='View service details'
-                          >
-                            <Eye className='h-4 w-4' />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <ServicesTable
+            services={filteredServices}
+            protocol={protocol}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </div>
       )}
     </div>
