@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
@@ -24,6 +25,11 @@ class User(BaseModel):
     full_name: Union[str, None] = None
     disabled: Union[bool, None] = None
     role: UserRole = UserRole.OPERATOR
+    createdAt: Optional[datetime] = Field(default_factory=datetime.now)
+    updatedAt: Optional[datetime] = Field(default_factory=datetime.now)
+
+    class Config:
+        orm_mode = True
 
 
 class UserInDB(User):
