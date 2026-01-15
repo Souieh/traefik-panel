@@ -1,5 +1,5 @@
-import logo from "@/assets/tp-logo.svg";
-import { Button } from "@/components/ui/button";
+import logo from '@/assets/tp-logo.svg';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,18 +7,19 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { authService } from "@/services/auth";
-import { Lock, LogIn, User as UserIcon } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/lib/AuthContext';
+import { Lock, LogIn, User as UserIcon } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -26,62 +27,57 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await authService.login({ username, password });
-      toast.success("Logged in successfully");
-      navigate("/dashboard");
+      await login({ username: username.trim(), email: username.trim(), password });
+      toast.success('Logged in successfully');
+      navigate('/dashboard');
     } catch (error) {
-      toast.error("Invalid credentials");
+      toast.error('Invalid credentials');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen md:bg-gray-100 p-4">
-      <Card className="w-full max-w-md shadow-none md:shadow-xs border-0 ">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-2">
-            <img src={logo} alt="Logo" className="h-16 w-auto" />
+    <div className='flex items-center justify-center min-h-screen md:bg-gray-100 p-4'>
+      <Card className='w-full max-w-md shadow-none md:shadow-xs border-0 '>
+        <CardHeader className='space-y-1'>
+          <div className='flex justify-center mb-2'>
+            <img src={logo} alt='Logo' className='h-16 w-auto' />
           </div>
-          <CardTitle className="text-2xl font-bold text-center">
-            Login
-          </CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className='text-2xl font-bold text-center'>Login</CardTitle>
+          <CardDescription className='text-center'>
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username or Email</Label>
-              <div className="relative">
-                <UserIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <CardContent className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='username'>Username or Email</Label>
+              <div className='relative'>
+                <UserIcon className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
                 <Input
-                  id="username"
-                  placeholder="johndoe or user@example.com"
-                  className="pl-10"
+                  id='username'
+                  placeholder='johndoe or user@example.com'
+                  className='pl-10'
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-blue-600 hover:underline"
-                >
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between'>
+                <Label htmlFor='password'>Password</Label>
+                <Link to='/forgot-password' className='text-sm text-blue-600 hover:underline'>
                   Forgot password?
                 </Link>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <div className='relative'>
+                <Lock className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
                 <Input
-                  id="password"
-                  type="password"
-                  className="pl-10"
+                  id='password'
+                  type='password'
+                  className='pl-10'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -90,21 +86,20 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <div className="flex flex-col gap-20 w-full">
-              <Button type="submit" className="flex-1" disabled={loading}>
+            <div className='flex flex-col gap-20 w-full'>
+              <Button type='submit' className='flex-1' disabled={loading}>
                 {loading ? (
-                  "Signing in..."
+                  'Signing in...'
                 ) : (
                   <>
-                    <LogIn className="mr-2 h-4 w-4" /> Sign In
+                    <LogIn className='mr-2 h-4 w-4' /> Sign In
                   </>
                 )}
               </Button>
 
               <footer>
-                <div className="max-w-7xl mx-auto  px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} Traefik Panel. All rights
-                  reserved.
+                <div className='max-w-7xl mx-auto  px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground'>
+                  © {new Date().getFullYear()} Traefik Panel. All rights reserved.
                 </div>
               </footer>
             </div>
