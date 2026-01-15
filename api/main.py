@@ -1,20 +1,20 @@
 import logging
 from pathlib import Path
-from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+
 from core.config import settings
-from routers import auth, users, traefik
-from scripts.configure_traefik_api import ensure_traefik_api_config
 from core.database import init_db
+from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from routers import auth, traefik, users
+from scripts.configure_traefik_api import ensure_traefik_api_config
 
 # ------------------------
 # Logging
 # ------------------------
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger("tpm-panel")
 
@@ -24,7 +24,7 @@ logger = logging.getLogger("tpm-panel")
 try:
     ensure_traefik_api_config()
     logger.info("Traefik API dynamic router ensured.")
-except Exception as e:
+except Exception:
     logger.exception("Failed to ensure Traefik API config")
     raise  # crash startup if config fails
 
@@ -33,10 +33,12 @@ except Exception as e:
 # ------------------------
 app = FastAPI(title="TPM Panel")
 
+
 @app.on_event("startup")
 async def startup_event():
     logger.info("Checking for initial user...")
     init_db()
+
 
 # CORS
 origins = [settings.tp_panel_url]  # only allow panel frontend domain
@@ -67,6 +69,7 @@ if ASSETS_DIR.exists():
 else:
     logger.warning(f"Static assets directory not found: {ASSETS_DIR}")
 
+
 # SPA fallback (React Router)
 @app.get("/{full_path:path}")
 async def spa_fallback(full_path: str):
@@ -75,6 +78,7 @@ async def spa_fallback(full_path: str):
         return FileResponse(index_file, media_type="text/html")
     logger.error(f"SPA index.html not found at {index_file}")
     return {"error": "index.html not found"}
+
 
 # ------------------------
 # Health check endpoint

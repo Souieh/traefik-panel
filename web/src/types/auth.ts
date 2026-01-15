@@ -1,9 +1,11 @@
 export interface User {
-  id: number;
-  email: string;
+  lastLogin: string | null;
+  createdAt: string | null;
   username: string;
-  is_active: boolean;
-  is_superuser: boolean;
+  email: string | null;
+  full_name: string | null;
+  disabled: boolean | null;
+  role: "admin" | "operator";
 }
 
 export interface LoginRequest {
