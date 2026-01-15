@@ -32,6 +32,7 @@ import {
   Pencil,
   Plus,
   Scissors,
+  Search,
   Shield,
   Trash2,
   Wand2,
@@ -776,6 +777,8 @@ export default function MiddlewaresPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [showLiveMiddlewares, setShowLiveMiddlewares] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isViewMode, setIsViewMode] = useState(false);
 
   const [name, setName] = useState('');
   const [simpleMode, setSimpleMode] = useState(true);
@@ -888,6 +891,7 @@ export default function MiddlewaresPage() {
      Open / Edit
   =========================== */
   const openAddModal = () => {
+    setIsViewMode(false);
     setEditingName(null);
     setName('');
     setSimpleMode(true);
@@ -901,11 +905,7 @@ export default function MiddlewaresPage() {
     config: MiddlewareConfig,
     source: 'configured' | 'live'
   ) => {
-    // Only allow editing of configured middlewares
-    if (source === 'live') {
-      toast.error('Cannot edit middlewares from Traefik API');
-      return;
-    }
+    setIsViewMode(source === 'live');
 
     setEditingName(middlewareName);
     setName(middlewareName);
@@ -987,11 +987,10 @@ export default function MiddlewaresPage() {
     }
 
     try {
+      await api.post(`/traefik/middlewares/${trimmedName}`, payload);
       if (editingName) {
-        await api.put(`/traefik/middlewares/${trimmedName}`, payload);
         toast.success('Middleware updated successfully');
       } else {
-        await api.post(`/traefik/middlewares/${trimmedName}`, payload);
         toast.success('Middleware created successfully');
       }
 
@@ -1008,7 +1007,12 @@ export default function MiddlewaresPage() {
       <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            {editingName ? (
+            {isViewMode ? (
+              <>
+                <Eye className='h-5 w-5' />
+                View Middleware: <Badge variant='outline'>{editingName}</Badge>
+              </>
+            ) : editingName ? (
               <>
                 <Pencil className='h-5 w-5' />
                 Edit Middleware: <Badge variant='outline'>{editingName}</Badge>
@@ -1023,77 +1027,83 @@ export default function MiddlewaresPage() {
         </DialogHeader>
 
         <form className='grid gap-6' onSubmit={handleSubmit}>
-          <div className='grid gap-4 rounded-lg border p-4'>
-            <Label className='text-base font-semibold'>Basic Information</Label>
-            <div className='grid gap-3'>
-              <div>
-                <Label htmlFor='middlewareName' className='mb-2 block'>
-                  Middleware Name
-                </Label>
-                <Input
-                  id='middlewareName'
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  disabled={!!editingName}
-                  placeholder='auth-middleware'
-                  className='font-mono'
-                />
-              </div>
-              <div>
-                <Label className='text-base font-semibold'>Configuration Mode</Label>
-                <div className='flex items-center gap-4'>
-                  <Label className='flex items-center gap-2'>
-                    <Checkbox
-                      checked={simpleMode}
-                      onCheckedChange={(v) => {
-                        const newMode = !!v;
-                        setSimpleMode(newMode);
-                        if (newMode) {
-                          // Clear configs when switching to simple mode
-                          setEnabledTypes([]);
-                          setRawConfigs({} as Record<MiddlewareType, string>);
-                        }
-                      }}
-                    />
-                    Use Simple Configuration Mode
+          <fieldset disabled={isViewMode} className='grid gap-6 border-none p-0 m-0'>
+            <div className='grid gap-4 rounded-lg border p-4'>
+              <Label className='text-base font-semibold'>Basic Information</Label>
+              <div className='grid gap-3'>
+                <div>
+                  <Label htmlFor='middlewareName' className='mb-2 block'>
+                    Middleware Name
                   </Label>
-                  <Badge variant='outline'>{enabledTypes.length} type(s) selected</Badge>
+                  <Input
+                    id='middlewareName'
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={!!editingName}
+                    placeholder='auth-middleware'
+                    className='font-mono'
+                  />
+                </div>
+                <div>
+                  <Label className='text-base font-semibold'>Configuration Mode</Label>
+                  <div className='flex items-center gap-4'>
+                    <Label className='flex items-center gap-2'>
+                      <Checkbox
+                        checked={simpleMode}
+                        onCheckedChange={(v) => {
+                          const newMode = !!v;
+                          setSimpleMode(newMode);
+                          if (newMode) {
+                            // Clear configs when switching to simple mode
+                            setEnabledTypes([]);
+                            setRawConfigs({} as Record<MiddlewareType, string>);
+                          }
+                        }}
+                      />
+                      Use Simple Configuration Mode
+                    </Label>
+                    <Badge variant='outline'>{enabledTypes.length} type(s) selected</Badge>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <EnhancedConfigBuilder
-            enabledTypes={enabledTypes}
-            rawConfigs={rawConfigs}
-            setEnabledTypes={setEnabledTypes}
-            setRawConfigs={setRawConfigs}
-            simpleMode={simpleMode}
-          />
-
-          {name && enabledTypes.length > 0 && (
-            <YAMLPreview
-              name={name}
-              config={enabledTypes.reduce((acc, type) => {
-                try {
-                  const parsed = JSON.parse(rawConfigs[type] || '{}');
-                  if (isRecord(parsed) && Object.keys(parsed).length > 0) {
-                    acc[type] = parsed;
-                  }
-                } catch {
-                  // Skip invalid JSON
-                }
-                return acc;
-              }, {} as MiddlewareConfig)}
+            <EnhancedConfigBuilder
+              enabledTypes={enabledTypes}
+              rawConfigs={rawConfigs}
+              setEnabledTypes={setEnabledTypes}
+              setRawConfigs={setRawConfigs}
+              simpleMode={simpleMode}
             />
-          )}
+
+            {name && enabledTypes.length > 0 && (
+              <YAMLPreview
+                name={name}
+                config={enabledTypes.reduce((acc, type) => {
+                  try {
+                    const parsed = JSON.parse(rawConfigs[type] || '{}');
+                    if (isRecord(parsed) && Object.keys(parsed).length > 0) {
+                      acc[type] = parsed;
+                    }
+                  } catch {
+                    // Skip invalid JSON
+                  }
+                  return acc;
+                }, {} as MiddlewareConfig)}
+              />
+            )}
+          </fieldset>
 
           <DialogFooter className='gap-2'>
             <Button type='button' variant='outline' onClick={() => setIsModalOpen(false)}>
-              Cancel
+              {isViewMode ? 'Close' : 'Cancel'}
             </Button>
-            <Button type='submit'>{editingName ? 'Update Middleware' : 'Create Middleware'}</Button>
+            {!isViewMode && (
+              <Button type='submit'>
+                {editingName ? 'Update Middleware' : 'Create Middleware'}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>
@@ -1103,6 +1113,12 @@ export default function MiddlewaresPage() {
   /* ===========================
      Render
   =========================== */
+  const filteredMiddlewares = allMiddlewares.filter((item) => {
+    const searchLower = searchTerm.toLowerCase();
+    const types = Object.keys(item.config).join(' ').toLowerCase();
+    return item.name.toLowerCase().includes(searchLower) || types.includes(searchLower);
+  });
+
   return (
     <div className='space-y-6'>
       <div className='flex justify-between items-center flex-wrap gap-4'>
@@ -1113,6 +1129,16 @@ export default function MiddlewaresPage() {
           </p>
         </div>
         <div className='flex items-center gap-4 flex-wrap'>
+          <div className='relative'>
+            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+            <Input
+              type='search'
+              placeholder='Search middlewares...'
+              className='w-full sm:w-64 pl-9'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <Button
             variant='outline'
             size='sm'
@@ -1161,11 +1187,12 @@ export default function MiddlewaresPage() {
         <div className='space-y-4'>
           <div className='flex items-center justify-between text-sm text-muted-foreground'>
             <div>
-              Showing {allMiddlewares.length} middleware{allMiddlewares.length !== 1 ? 's' : ''}
+              Showing {filteredMiddlewares.length} middleware
+              {filteredMiddlewares.length !== 1 ? 's' : ''}
               {showLiveMiddlewares && (
                 <span className='ml-2'>
-                  ({allMiddlewares.filter((m) => m.source === 'configured').length} configured,
-                  {allMiddlewares.filter((m) => m.source === 'live').length} live)
+                  ({filteredMiddlewares.filter((m) => m.source === 'configured').length} configured,
+                  {filteredMiddlewares.filter((m) => m.source === 'live').length} live)
                 </span>
               )}
             </div>
@@ -1193,7 +1220,7 @@ export default function MiddlewaresPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allMiddlewares.map(({ name, config, source }) => {
+                {filteredMiddlewares.map(({ name, config, source }) => {
                   const types = Object.keys(config).filter(
                     isValidMiddlewareType
                   ) as MiddlewareType[];
@@ -1264,10 +1291,10 @@ export default function MiddlewaresPage() {
                             <Button
                               size='icon'
                               variant='ghost'
-                              disabled
-                              title='Live middlewares are read-only'
+                              onClick={() => handleEdit(name, config, source)}
+                              title='View middleware details'
                             >
-                              <Eye className='h-4 w-4 text-muted-foreground' />
+                              <Eye className='h-4 w-4' />
                             </Button>
                           )}
                         </div>
