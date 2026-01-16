@@ -16,10 +16,7 @@
     <meta name="author" content="EaGer" />
 
     <!-- Open Graph for social preview -->
-    <meta
-      property="og:title"
-      content="Traefik Panel – Modern Dashboard for Traefik"
-    />
+    <meta property="og:title" content="Traefik Panel – Modern Dashboard for Traefik" />
     <meta
       property="og:description"
       content="Manage Traefik routes, SSL certificates, and monitor metrics easily with this Docker-ready dashboard."
@@ -48,33 +45,33 @@
         theme: {
           extend: {
             colors: {
-              primary: "#2563eb",
-              "primary-dark": "#1d4ed8",
-              "primary-light": "#3b82f6",
-              secondary: "#f4f4f5",
-              accent: "#8b5cf6",
-              surface: "#ffffff",
-              "surface-light": "#ffffff",
-              "surface-lighter": "#f4f4f5",
-              text: "#09090b",
-              "text-muted": "#71717a",
-              border: "#e4e4e7",
-              success: "#10b981",
+              primary: '#2563eb',
+              'primary-dark': '#1d4ed8',
+              'primary-light': '#3b82f6',
+              secondary: '#f4f4f5',
+              accent: '#8b5cf6',
+              surface: '#ffffff',
+              'surface-light': '#ffffff',
+              'surface-lighter': '#f4f4f5',
+              text: '#09090b',
+              'text-muted': '#71717a',
+              border: '#e4e4e7',
+              success: '#10b981',
             },
             fontFamily: {
-              sans: ["Inter", "system-ui", "sans-serif"],
-              mono: ["JetBrains Mono", "monospace"],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
             },
             boxShadow: {
-              glow: "0 0 25px rgba(59, 130, 246, 0.2)",
+              glow: '0 0 25px rgba(59, 130, 246, 0.2)',
             },
             animation: {
-              float: "float 3s ease-in-out infinite",
+              float: 'float 3s ease-in-out infinite',
             },
             keyframes: {
               float: {
-                "0%, 100%": { transform: "translateY(0)" },
-                "50%": { transform: "translateY(-10px)" },
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
               },
             },
           },
@@ -92,37 +89,28 @@
       }
 
       .section-title::after {
-        content: "";
+        content: '';
         position: absolute;
         bottom: -10px;
         left: 0;
         width: 60px;
         height: 4px;
-        background: linear-gradient(
-          90deg,
-          theme("colors.primary"),
-          theme("colors.accent")
-        );
+        background: linear-gradient(90deg, theme('colors.primary'), theme('colors.accent'));
         border-radius: 2px;
       }
 
       .header-bg::before {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         height: 1px;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          theme("colors.primary"),
-          transparent
-        );
+        background: linear-gradient(90deg, transparent, theme('colors.primary'), transparent);
       }
 
       .demo-section::before {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
@@ -130,34 +118,34 @@
         height: 4px;
         background: linear-gradient(
           90deg,
-          theme("colors.primary"),
-          theme("colors.accent"),
-          theme("colors.primary")
+          theme('colors.primary'),
+          theme('colors.accent'),
+          theme('colors.primary')
         );
       }
 
       .code-block::before {
-        content: "Terminal";
+        content: 'Terminal';
         position: absolute;
         top: -12px;
         left: 20px;
-        background: theme("colors.secondary");
+        background: theme('colors.secondary');
         padding: 0 10px;
         font-size: 0.8rem;
-        color: theme("colors.text-muted");
-        font-family: "Inter", sans-serif;
+        color: theme('colors.text-muted');
+        font-family: 'Inter', sans-serif;
       }
 
       .file-block::before {
-        content: ".env";
+        content: '.env';
         position: absolute;
         top: -12px;
         left: 20px;
-        background: theme("colors.secondary");
+        background: theme('colors.secondary');
         padding: 0 10px;
         font-size: 0.8rem;
-        color: theme("colors.text-muted");
-        font-family: "Inter", sans-serif;
+        color: theme('colors.text-muted');
+        font-family: 'Inter', sans-serif;
       }
 
       .screenshot-img {
@@ -199,14 +187,12 @@
           >
             <img src="tp-logo.svg" alt="Traefik Panel Logo" />
           </div>
-          <h1
-            class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 gradient-text"
-          >
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 gradient-text">
             Traefik Panel
           </h1>
           <p class="text-lg md:text-xl text-text-muted mb-8 max-w-2xl mx-auto">
-            Modern web dashboard to manage Traefik routes, SSL certificates, and
-            monitor metrics with an intuitive interface
+            Modern web dashboard to manage Traefik routes, SSL certificates, and monitor metrics
+            with an intuitive interface
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -247,8 +233,8 @@
             </div>
             <h3 class="text-xl font-semibold mb-2">Route Management</h3>
             <p class="text-text-muted">
-              View and manage all Traefik routes with an intuitive interface.
-              Add, edit, or remove routes with just a few clicks.
+              View and manage all Traefik routes with an intuitive interface. Add, edit, or remove
+              routes with just a few clicks.
             </p>
           </div>
 
@@ -260,12 +246,10 @@
             >
               <i data-lucide="shield-check" class="w-7 h-7 text-white"></i>
             </div>
-            <h3 class="text-xl font-semibold mb-2">
-              SSL Certificate Management
-            </h3>
+            <h3 class="text-xl font-semibold mb-2">SSL Certificate Management</h3>
             <p class="text-text-muted">
-              Monitor and manage SSL/TLS certificates across all your domains.
-              Get alerts for expiring certificates.
+              Monitor and manage SSL/TLS certificates across all your domains. Get alerts for
+              expiring certificates.
             </p>
           </div>
 
@@ -279,8 +263,8 @@
             </div>
             <h3 class="text-xl font-semibold mb-2">Real-time Monitoring</h3>
             <p class="text-text-muted">
-              Monitor traffic, request rates, and errors in real-time with
-              interactive charts and detailed logs.
+              Monitor traffic, request rates, and errors in real-time with interactive charts and
+              detailed logs.
             </p>
           </div>
 
@@ -294,8 +278,8 @@
             </div>
             <h3 class="text-xl font-semibold mb-2">Docker-Ready</h3>
             <p class="text-text-muted">
-              Deploy with Docker Compose in minutes. Seamlessly integrates with
-              your existing Docker ecosystem.
+              Deploy with Docker Compose in minutes. Seamlessly integrates with your existing Docker
+              ecosystem.
             </p>
           </div>
         </div>
@@ -372,27 +356,20 @@
         id="demo"
         class="mb-16 md:mb-24 bg-gradient-to-br from-surface-light to-secondary border border-border rounded-2xl p-8 relative overflow-hidden demo-section"
       >
-        <h2 class="text-3xl md:text-4xl font-bold mb-6 gradient-text">
-          Quick Start
-        </h2>
-        <p class="text-text-muted mb-6">
-          Get up and running in seconds using Docker Compose.
-        </p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 gradient-text">Quick Start</h2>
+        <p class="text-text-muted mb-6">Get up and running in seconds using Docker Compose.</p>
 
         <div
           class="bg-secondary border border-border rounded-xl p-6 mb-6 relative font-mono text-sm code-block"
         >
           <code class="text-success block"># Clone the repository</code>
-          <code class="block"
-            >git clone https://github.com/souieh/traefik-panel.git</code
-          >
+          <code class="block">git clone https://github.com/souieh/traefik-panel.git</code>
           <code class="block mb-4">cd traefik-panel</code>
           <code class="text-success block"># Setup environment</code>
           <code class="block mb-4">cp .env.example .env</code>
           <code class="text-success block"># Create required directories</code>
           <code class="block mb-4"
-            >mkdir -p ./data/traefik/dynamic ./data/traefik/certs
-            ./data/traefik/acme</code
+            >mkdir -p ./data/traefik/dynamic ./data/traefik/certs ./data/traefik/acme</code
           >
           <code class="text-success block"># Start the stack</code>
           <code class="block">docker compose up -d</code>
@@ -400,9 +377,7 @@
 
         <p class="text-text-muted">
           Access the panel at
-          <code class="bg-surface-lighter px-3 py-1 rounded font-mono"
-            >http://localhost:8080</code
-          >
+          <code class="bg-surface-lighter px-3 py-1 rounded font-mono">http://localhost:8080</code>
         </p>
       </section>
 
@@ -415,18 +390,14 @@
         </h2>
         <p class="text-text-muted mb-6">
           Configure the application by editing the
-          <code class="bg-surface-lighter px-2 py-0.5 rounded font-mono text-sm"
-            >.env</code
-          >
+          <code class="bg-surface-lighter px-2 py-0.5 rounded font-mono text-sm">.env</code>
           file:
         </p>
 
         <div
           class="bg-secondary border border-border rounded-xl p-6 relative font-mono text-sm file-block overflow-x-auto"
         >
-          <pre
-            class="text-text-muted"
-          ><span class="text-success"># Security Configuration</span>
+          <pre class="text-text-muted"><span class="text-success"># Security Configuration</span>
 SECRET_KEY=changeme
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -469,7 +440,7 @@ TP_PANEL_URL=http://localhost:5000</pre>
 
         <!-- Carousel Container -->
         <div
-          class="relative w-full max-w-6xl mx-auto h-[500px] carousel-container flex items-center justify-center"
+          class="relative w-full max-w-6xl mx-auto h-[400px] md:h-[500px] carousel-container flex items-center justify-center"
           id="carousel-container"
         >
           <!-- Cards will be injected here by JS -->
@@ -500,29 +471,41 @@ TP_PANEL_URL=http://localhost:5000</pre>
     <footer class="border-t border-border py-12">
       <div class="container mx-auto px-4">
         <div class="flex flex-col md:flex-row justify-between items-center">
-          <div class="text-text-muted mb-4 md:mb-0">
-            © 2026 Souieh | Hosted via GitHub Pages
-          </div>
+          <div class="text-text-muted mb-4 md:mb-0">© 2026 Souieh | Hosted via GitHub Pages</div>
           <div class="flex gap-6">
             <a
               href="https://github.com/souieh/traefik-panel"
               class="text-text-muted hover:text-primary transition-colors"
               >GitHub</a
             >
-            <a
-              href="#"
-              class="text-text-muted hover:text-primary transition-colors"
+            <a href="#" class="text-text-muted hover:text-primary transition-colors"
               >Documentation</a
             >
-            <a
-              href="#"
-              class="text-text-muted hover:text-primary transition-colors"
-              >Issues</a
-            >
+            <a href="#" class="text-text-muted hover:text-primary transition-colors">Issues</a>
           </div>
         </div>
       </div>
     </footer>
+
+    <!-- Lightbox Modal -->
+    <div
+      id="lightbox"
+      class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+      onclick="closeLightbox()"
+    >
+      <button class="absolute top-4 right-4 text-white hover:text-primary transition-colors z-50">
+        <i data-lucide="x" class="w-8 h-8"></i>
+      </button>
+      <div class="flex items-center justify-center h-full w-full p-4">
+        <img
+          id="lightbox-img"
+          src=""
+          alt="Full view"
+          class="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl transform scale-95 transition-transform duration-300"
+          onclick="event.stopPropagation()"
+        />
+      </div>
+    </div>
 
     <script>
       // Initialize Lucide icons
@@ -532,79 +515,88 @@ TP_PANEL_URL=http://localhost:5000</pre>
       let currentImageIndex = 0;
       const screenshots = [
         {
-          src: "screenshots/login.png",
-          title: "Login Screen",
-          desc: "Secure authentication with modern design",
-          tag: "Authentication",
+          src: 'screenshots/login.png',
+          title: 'Login Screen',
+          desc: 'Secure authentication with modern design',
+          tag: 'Authentication',
         },
         {
-          src: "screenshots/dashboard.png",
-          title: "Dashboard Overview",
-          desc: "Main dashboard showing system overview",
-          tag: "Overview",
+          src: 'screenshots/dashboard.png',
+          title: 'Dashboard Overview',
+          desc: 'Main dashboard showing system overview',
+          tag: 'Overview',
         },
         {
-          src: "screenshots/routers.png",
-          title: "Routers Management",
-          desc: "Manage all your Traefik routers",
-          tag: "Routing",
+          src: 'screenshots/routers.png',
+          title: 'Routers Management',
+          desc: 'Manage all your Traefik routers',
+          tag: 'Routing',
         },
         {
-          src: "screenshots/services.png",
-          title: "Services Management",
-          desc: "Configure and monitor backend services",
-          tag: "Backend",
+          src: 'screenshots/services.png',
+          title: 'Services Management',
+          desc: 'Configure and monitor backend services',
+          tag: 'Backend',
         },
         {
-          src: "screenshots/middlewares.png",
-          title: "Middlewares Configuration",
-          desc: "Configure Traefik middlewares",
-          tag: "Configuration",
+          src: 'screenshots/middlewares.png',
+          title: 'Middlewares Configuration',
+          desc: 'Configure Traefik middlewares',
+          tag: 'Configuration',
         },
         {
-          src: "screenshots/ssl-certs-&-resolvers.png",
-          title: "SSL Certificates & Resolvers",
-          desc: "Manage SSL/TLS certificates and DNS resolvers",
-          tag: "Security",
+          src: 'screenshots/ssl-certs-&-resolvers.png',
+          title: 'SSL Certificates & Resolvers',
+          desc: 'Manage SSL/TLS certificates and DNS resolvers',
+          tag: 'Security',
         },
         {
-          src: "screenshots/status.png",
-          title: "System Status",
-          desc: "Monitor system health and performance metrics",
-          tag: "Monitoring",
+          src: 'screenshots/status.png',
+          title: 'System Status',
+          desc: 'Monitor system health and performance metrics',
+          tag: 'Monitoring',
         },
         {
-          src: "screenshots/users.png",
-          title: "User Management",
-          desc: "Manage user accounts and permissions",
-          tag: "Administration",
+          src: 'screenshots/users.png',
+          title: 'User Management',
+          desc: 'Manage user accounts and permissions',
+          tag: 'Administration',
         },
       ];
 
       // Carousel Logic
       function initCarousel() {
-        const container = document.getElementById("carousel-container");
-        const dotsContainer = document.getElementById("carousel-dots");
+        const container = document.getElementById('carousel-container');
+        const dotsContainer = document.getElementById('carousel-dots');
 
         // Create Cards
         screenshots.forEach((item, index) => {
-          const card = document.createElement("div");
+          const card = document.createElement('div');
           card.className =
-            "carousel-card w-[300px] md:w-[600px] bg-surface-light border border-border rounded-xl overflow-hidden cursor-pointer";
+            'carousel-card w-[280px] sm:w-[350px] md:w-[600px] bg-surface-light border border-border rounded-xl overflow-hidden cursor-pointer';
           card.onclick = () => {
-            currentImageIndex = index;
-            updateCarousel();
+            if (currentImageIndex === index) {
+              openLightbox(index);
+            } else {
+              currentImageIndex = index;
+              updateCarousel();
+            }
           };
 
           card.innerHTML = `
-            <img src="${item.src}" alt="${
+            <div class="relative group">
+              <img src="${item.src}" alt="${
             item.title
-          }" class="w-full h-[250px] md:h-[350px] object-cover border-b border-border">
+          }" class="w-full h-[200px] sm:h-[250px] md:h-[350px] object-cover border-b border-border">
+              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <i data-lucide="maximize-2" class="text-white w-8 h-8 drop-shadow-lg"></i>
+              </div>
+            </div>
             <div class="p-6 bg-surface-light">
               <div class="flex justify-between items-start mb-2">
                 <h3 class="text-lg font-semibold">${item.title}</h3>
                 <span class="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">${
-                  item.tag || "Feature"
+                  item.tag || 'Feature'
                 }</span>
               </div>
               <p class="text-text-muted text-sm">${item.desc}</p>
@@ -614,9 +606,9 @@ TP_PANEL_URL=http://localhost:5000</pre>
           container.appendChild(card);
 
           // Create Dot
-          const dot = document.createElement("button");
+          const dot = document.createElement('button');
           dot.className =
-            "w-2 h-2 rounded-full transition-all duration-300 bg-border hover:bg-primary";
+            'w-2 h-2 rounded-full transition-all duration-300 bg-border hover:bg-primary';
           dot.onclick = () => {
             currentImageIndex = index;
             updateCarousel();
@@ -624,12 +616,13 @@ TP_PANEL_URL=http://localhost:5000</pre>
           dotsContainer.appendChild(dot);
         });
 
+        lucide.createIcons();
         updateCarousel();
       }
 
       function updateCarousel() {
-        const cards = document.querySelectorAll(".carousel-card");
-        const dots = document.getElementById("carousel-dots").children;
+        const cards = document.querySelectorAll('.carousel-card');
+        const dots = document.getElementById('carousel-dots').children;
 
         cards.forEach((card, index) => {
           const offset = index - currentImageIndex;
@@ -637,48 +630,40 @@ TP_PANEL_URL=http://localhost:5000</pre>
           // Reset styles
           card.style.zIndex = 0;
           card.style.opacity = 0;
-          card.style.pointerEvents = "none";
+          card.style.pointerEvents = 'none';
 
           if (index === currentImageIndex) {
             // Active Card
-            card.style.transform = "translate(-50%, -50%) scale(1)";
+            card.style.transform = 'translate(-50%, -50%) scale(1)';
             card.style.zIndex = 20;
             card.style.opacity = 1;
-            card.style.pointerEvents = "auto";
-          } else if (
-            offset === -1 ||
-            (currentImageIndex === 0 && index === cards.length - 1)
-          ) {
+            card.style.pointerEvents = 'auto';
+          } else if (offset === -1 || (currentImageIndex === 0 && index === cards.length - 1)) {
             // Previous Card
-            card.style.transform =
-              "translate(-85%, -50%) scale(0.85) rotateY(10deg)";
+            card.style.transform = 'translate(-85%, -50%) scale(0.85) rotateY(10deg)';
             card.style.zIndex = 10;
             card.style.opacity = 0.6;
-            card.style.pointerEvents = "auto";
-          } else if (
-            offset === 1 ||
-            (currentImageIndex === cards.length - 1 && index === 0)
-          ) {
+            card.style.pointerEvents = 'auto';
+          } else if (offset === 1 || (currentImageIndex === cards.length - 1 && index === 0)) {
             // Next Card
-            card.style.transform =
-              "translate(-15%, -50%) scale(0.85) rotateY(-10deg)";
+            card.style.transform = 'translate(-15%, -50%) scale(0.85) rotateY(-10deg)';
             card.style.zIndex = 10;
             card.style.opacity = 0.6;
-            card.style.pointerEvents = "auto";
+            card.style.pointerEvents = 'auto';
           } else {
             // Hidden Cards
-            card.style.transform = "translate(-50%, -50%) scale(0.5)";
+            card.style.transform = 'translate(-50%, -50%) scale(0.5)';
           }
         });
 
         // Update Dots
         Array.from(dots).forEach((dot, index) => {
           if (index === currentImageIndex) {
-            dot.classList.remove("bg-border", "w-2");
-            dot.classList.add("bg-primary", "w-6");
+            dot.classList.remove('bg-border', 'w-2');
+            dot.classList.add('bg-primary', 'w-6');
           } else {
-            dot.classList.add("bg-border", "w-2");
-            dot.classList.remove("bg-primary", "w-6");
+            dot.classList.add('bg-border', 'w-2');
+            dot.classList.remove('bg-primary', 'w-6');
           }
         });
       }
@@ -689,18 +674,53 @@ TP_PANEL_URL=http://localhost:5000</pre>
       }
 
       function prevSlide() {
-        currentImageIndex =
-          (currentImageIndex - 1 + screenshots.length) % screenshots.length;
+        currentImageIndex = (currentImageIndex - 1 + screenshots.length) % screenshots.length;
         updateCarousel();
       }
 
+      function openLightbox(index) {
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        const item = screenshots[index];
+
+        img.src = item.src;
+        lightbox.classList.remove('hidden');
+        // Small delay to allow display:block to apply before opacity transition
+        setTimeout(() => {
+          lightbox.classList.remove('opacity-0');
+          img.classList.remove('scale-95');
+          img.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeLightbox() {
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+
+        lightbox.classList.add('opacity-0');
+        img.classList.remove('scale-100');
+        img.classList.add('scale-95');
+
+        setTimeout(() => {
+          lightbox.classList.add('hidden');
+          img.src = '';
+        }, 300);
+        document.body.style.overflow = '';
+      }
+
+      // Close lightbox on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox();
+      });
+
       // Initialize
-      document.addEventListener("DOMContentLoaded", initCarousel);
+      document.addEventListener('DOMContentLoaded', initCarousel);
 
       // Keyboard Nav
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowLeft") prevSlide();
-        if (e.key === "ArrowRight") nextSlide();
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') prevSlide();
+        if (e.key === 'ArrowRight') nextSlide();
       });
     </script>
   </body>
